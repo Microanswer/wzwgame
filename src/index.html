@@ -15,7 +15,9 @@
     var s = new WzwScreen("#screen");
 
     function playd() {
-        s.playAnim(WzwScreen.ANIM.CIRCLE);
+        s.playAnim(WzwScreen.ANIM.CIRCLE, function (index) {
+            console.log(`第${index}组动画完成`);
+        });
     }
 </script>
 </body>

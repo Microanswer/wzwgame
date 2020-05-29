@@ -17,11 +17,6 @@
         color2:        "#898989",     // 浅颜色
     };
 
-    var ANIM_TYPE = {
-        LINE_BY_LINE: "1",  // 一行一行进行的动画
-        ATOM_ATOM:    "2",  // 一个点一个点进行的动画。
-    }
-
     /**
      * 游戏显示屏类。所以游戏都通过使用这个显示器类来实现游戏内容。
      */
@@ -63,10 +58,9 @@
     /**
      * 执行指定动画，这些动画需要时来自: WzwScreen.ANIM 里面的。
      * @param anim 某个动画
-     * @param cb 当动画执行到满屏时的回调
-     * @param cb2 当动画执行完成时的回调
+     * @param cb 当动画里的每一组动画执行到完成时的回调。
      */
-    WzwScreen.prototype.playAnim = function (anim, cb, cb2) {
+    WzwScreen.prototype.playAnim = function (anim, cb) {
         var _this = this;
         var animResult = anim.call(_this);
 
@@ -80,55 +74,12 @@
         });
         _this.animArr = animArr;
 
-        // 为动画数组动态加入数据，这样绘制的时候就会慢慢显示。
-        if (animResult.animType === ANIM_TYPE.ATOM_ATOM) {
-
-            WzwScreen.scroll(0, animResult.animArr.length, {
-                goo: function (index) {
-
-                    WzwScreen.each(index, function (va, ind) {
-                        var position = animResult.animArr[ind];
-                        if (position) {
-                            animArr[position[0]][position[1]] = 1;
-                        }
-                    });
-
-                },
-                end: function () {
-
-                    WzwScreen.each(_this.option.atomRowCount, function (v, rowIndex) {
-                        _this.atoms[rowIndex] = [];
-                        WzwScreen.each(_this.option.atomColCount, function (v2, colIndex) {
-                            _this.atoms[rowIndex][colIndex] = 0;
-                        });
-                    });
-
-                    var backArr = animResult.animArr.reverse();
-                    // 再执行反向动画。
-                    WzwScreen.scroll(0, backArr.length, {
-                        goo: function (index) {
-                            WzwScreen.each(index, function (va, ind) {
-                                var position = animResult.animArr[ind];
-                                if (position) {
-                                    animArr[position[0]][position[1]] = 0;
-                                }
-                            });
-
-                        },
-                        end: function () {
-
-                            // 再执行反向动画。
-                            _this.animArr = undefined;
-
-                        }
-                    }, 2300);
-
-
-                }
-            }, 2300);
-
+        // 做一个简单的验证，必须时间配置和动画组个数相同。
+        if (animResult.animArr.length !== animResult.animTime.length) {
+            throw new Error("时间配置与动画不匹配。");
         }
 
+        applyAnim.call(_this, animResult, 0, cb);
     }
 
 
@@ -141,7 +92,7 @@
         WzwScreen.each(_this.option.atomRowCount, function (value, row) {
             _this.atoms[row] = [];
             WzwScreen.each(_this.option.atomColCount, function (value, col) {
-                _this.atoms[row][col] = Math.floor(Math.random()*2);
+                _this.atoms[row][col] = 0;
             });
         });
 
@@ -150,7 +101,7 @@
         WzwScreen.each(4, function (value, row) {
             _this.statusAtoms[row] = [];
             WzwScreen.each(4, function (value, col) {
-                _this.statusAtoms[row][col] = 0;
+                _this.statusAtoms[row][col] = Math.floor(Math.random()*2);
             });
         });
 
@@ -324,6 +275,59 @@
         ctx.lineWidth   = olw;
     }
 
+    // 执行动画组,这是一个递归方法
+    function applyAnim(animResult, animIndex, cb) {
+        var _this = this;
+
+        // 还有没有执行的动画组，则继续保持执行
+        if (animIndex < animResult.animArr.length) {
+            var animGroup = animResult.animArr[animIndex];
+            var animTime  = animResult.animTime[animIndex];
+
+            function applyFramOf(index) {
+                // 拿到一帧。
+                var fram = animGroup[index];
+                if (!fram) {return;}
+
+                _this.animArr = fram;
+            }
+
+            // 为动画数组动态加入数据，这样绘制的时候就会慢慢显示。
+            WzwScreen.scroll(0, animGroup.length - 1, {
+                goo: applyFramOf,
+                end: function (end) {
+                    // 执行到end时再调一次，使界面会有一个从头到为完整的过程。
+                    applyFramOf(end);
+
+                    cb && cb(animIndex);
+
+                    // 本组动画完成，继续下一组。
+                    applyAnim.call(_this, animResult, animIndex + 1, cb);
+                }
+            }, animTime);
+        } else {
+            // 所有动画都执行了，清空动画数组。
+            _this.animArr = undefined;
+        }
+
+    }
+
+    // 获取一个二维数组，这个二维数组里面的每个一维数组里的每个值其实也是一个数组（本质上整个二维数组是一个三维数组，我这样注释可能更容易理解），
+    // 这个数组只有2个元素，第一个元素是当前值所在的rowIndex，第二个则是对应的colIndex。
+    // 这么说起来，本方法返回的就是一个三维数组，每个一维数组保存了这个一维数组自身所在的位置信息。
+    function getAtomPositionArr() {
+        var _this = this;
+        var arr = [];
+        WzwScreen.each(_this.option.atomRowCount, function (num, rowIndex) {
+            arr[rowIndex] = [];
+            WzwScreen.each(_this.option.atomColCount, function (num2, colIndex) {
+                arr[rowIndex][colIndex] = [rowIndex, colIndex];
+            });
+        });
+        return arr;
+    }
+
+
     /**
      * 对象合并方法。
      */
@@ -388,7 +392,7 @@
                 var now = Date.now(); // 当前帧开始时间
                 var timestamp = now - startTime; // 逝去的时间(已进行动画的时间)
                 var detal2 = ease(timestamp / time);
-                var result2 = Math.ceil(startY + detal2 * distanceY);
+                var result2 = startY + Math.floor(detal2 * distanceY);
 
                 if (!ended) {
                     back && back.goo && back.goo(result2);
@@ -403,18 +407,46 @@
         })();
     };
 
+
     /**
-     * 动画集
+     * 动画集。
+     *
+     * 这些动画都是一个方法，此方法应该返回一个（动画数组和动画时长）的对象。这个动画数组就像下面这样：
+     *
+     * 下面是一个动效的返回数据示例说明。
+     * [
+     *   // 这里表示执行一个动画,这个数组里的每一个数组表示一帧。
+     *   [
+     *     // 这里表示一帧动画要显示的点阵. rowIndex 和 colIndex 分别表示了点阵的行号和列号，都以0开始算起。
+     *     // 不在这个数组里的其它点阵都不会显示。
+     *     [ [1,1,...,0,0], [1,1,0,....,0,0]... ],
+     *
+     *     // 如果说上一只会显示2个点阵，那么这一帧就会显示三个。
+     *     [ [1,1,1,...,0,0], [1,1,1,...,0,0],[1,1,1,...,0,0]... ],
+     *
+     *     // 一直向下有很多很多个帧，这样就可以形成动画效果了。
+     *     .
+     *     .
+     *     .
+     *   ],
+     *
+     *   // 这里表示执行一个动画
+     *   [
+     *       [...],
+     *       [...],
+     *       .
+     *       .
+     *       .
+     *   ]
+     * ]
+     * 这个数组里有2组动画，playanim方法将在每一组动画执行完成后执行一次回调，这样使得游戏实现端有机会在动画某个时刻执行某个动作。
+     *
      * */
     WzwScreen.ANIM = {
         CIRCLE: function () {
-
-
-            // 求一个算法：
-            // 将一个二维数组里面的元素按规则转换成一维数组。
-            // 示例规则如下：
+            // 旋转动画，需要具备旋转的效果。为了构建动画帧，需要先有下面所描述的算法实现。
             //
-            // 这是一个二维数组的内容
+            // 二维数组的内容
             // q a z w s x
             // e d c r f v
             // t g b y h n
@@ -424,60 +456,47 @@
             // 转换为这样的一维数组:
             // q e t y i k o l p q m n v x s w z a d g h n u j h f r c b y
 
-            // var arr = [
-            //     ['q', 'a', 'z', 'w', 's', 'x'],
-            //     ['e', 'd', 'c', 'r', 'f', 'v'],
-            //     ['t', 'g', 'b', 'y', 'h', 'n'],
-            //     ['y', 'h', 'n', 'u', 'j', 'm'],
-            //     ['i', 'k', 'o', 'l', 'p', 'q']
-            // ];
-
             var _this = this;
             var result = [];
 
-            /**
-             * 取数模式，l：左边，r：右边，t：上边，b：下边
-             * @type {string}
-             */
-            var getMod = "l"; // 首先从左边开始取数。
+            // 下面实现上面的算法，通过得到这样的一维数组，更方便的构建旋转动画帧。
+            var getMod     = "l"; // 取数模式，l：左边，r：右边，t：上边，b：下边。首先从左边开始取数。
             var totalCount = _this.option.atomRowCount * _this.option.atomColCount;
-            var arr = [];
-            WzwScreen.each(_this.option.atomRowCount, function (num, rowIndex) {
-                arr[rowIndex] = [];
-                WzwScreen.each(_this.option.atomColCount, function (num2, colIndex) {
-                    arr[rowIndex][colIndex] = [rowIndex, colIndex];
-                });
-            });
+            var arr        = getAtomPositionArr.call(_this);
             while (result.length < totalCount) {
-                if (getMod === "l") {
-                    for (var i = 0; i < arr.length; i++) {
+                var i;
+                /**/ if (getMod === "l") {
+                    for (i = 0; i < arr.length; i++) {
                         result.push(arr[i].shift());
                     }
 
                     // 左边取完，设置为取下边。
                     getMod = "b";
-                } else if (getMod === "b") {
+                }
+                else if (getMod === "b") {
                     var pop = arr.pop();
-                    for (var i = 0; i < pop.length; i++) {
+                    for (i = 0; i < pop.length; i++) {
                         result.push(pop[i]);
                     }
 
                     // 下边取完，设置为取右边
                     getMod = "r";
-                } else if (getMod === "r") {
+                }
+                else if (getMod === "r") {
 
                     // 右边的得从下往上。
-                    for (var i = arr.length - 1; i >= 0; i--) {
+                    for (i = arr.length - 1; i >= 0; i--) {
                         result.push(arr[i].pop());
                     }
 
                     // 右边取完，取顶部的。
                     getMod = "t";
-                } else if (getMod === "t") {
+                }
+                else if (getMod === "t") {
 
                     // 顶部的得从右往左
                     var shift = arr.shift();
-                    for (var i = shift.length - 1; i >= 0 ; i--) {
+                    for (i = shift.length - 1; i >= 0 ; i--) {
                         result.push(shift[i]);
                     }
 
@@ -485,10 +504,34 @@
                     getMod = "l";
                 }
             }
+            // 一维数组获取成功。
+
+            // 开始根据这个一维数组构建动画帧
+            var animGroup1 = [];
+            WzwScreen.each(result, function (positionArr, index/*这里的index是从0开始的，所以下面的循环+1了*/) {
+                var fram = []; // 帧数组。
+                WzwScreen.each(_this.option.atomRowCount, function (num, rowIndex) {
+                    fram[rowIndex] = [];
+                    WzwScreen.each(_this.option.atomColCount, function (num2, colIndex) {
+                        fram[rowIndex][colIndex] = 0;
+                    });
+                });
+                WzwScreen.each(index + 1, function (val, jndex) {
+                    var ps = result[jndex];
+                    fram[ps[0]][ps[1]] = 1;
+                });
+                animGroup1.push(fram);
+            });
 
             return {
-                animArr: result,
-                animType: ANIM_TYPE.ATOM_ATOM
+                animArr: [
+                    animGroup1, // -----------------------
+                    animGroup1.concat([]).reverse() //   |
+                ],             //                        |--> 这就表示第一组动画的播放时长是1800毫秒。
+                animTime: [    //                        |
+                    1800, // -----------------------------
+                    1800
+                ]
             };
         }
     }
