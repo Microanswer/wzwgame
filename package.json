@@ -1,0 +1,15 @@
+{
+  "name": "wzwgame",
+  "version": "1.0.0",
+  "description": "王中王掌上游戏机模拟",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Microanswer",
+    "王中王游戏机"
+  ],
+  "author": "Microanswer",
+  "license": "ISC"
+}

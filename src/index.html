@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>王中王游戏机</title>
+    <script src="wzwScreen.js"></script>
+</head>
+<body>
+<div id="screen"></div>
+<br>
+<br>
+<br>
+<button onclick="playd()" id="pl">播放</button>
+<script>
+    var s = new WzwScreen("#screen");
+
+    function playd() {
+        s.playAnim(WzwScreen.ANIM.CIRCLE);
+    }
+</script>
+</body>
+</html>
