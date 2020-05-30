@@ -10,12 +10,14 @@
 <br>
 <br>
 <br>
-<button onclick="playd()" id="pl">播放</button>
+<button onclick="playd(WzwScreen.ANIM.CIRCLE)">播放旋转动画</button>
+<button onclick="playd(WzwScreen.ANIM.B2T)">播放抹除动画1</button>
+<button onclick="playd(WzwScreen.ANIM.T2B)">播放抹除动画2</button>
 <script>
     var s = new WzwScreen("#screen");
 
-    function playd() {
-        s.playAnim(WzwScreen.ANIM.CIRCLE, function (index) {
+    function playd(anim) {
+        s.playAnim(anim, function (index) {
             console.log(`第${index}组动画完成`);
         });
     }

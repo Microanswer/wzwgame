@@ -56,23 +56,37 @@
     }
 
     /**
+     * 返回一个点阵二维数组，这个二维数组的大小和构建实例时相同。
+     * @param valueAdapter [ Function ] 如果不指定，则返回的数组内容全是0，如果指定，
+     * 必须是一个函数，传入rowIndex和colIndex，数组内容则是你返回的内容。
+     */
+    WzwScreen.prototype.makeNewArr = function (valueAdapter) {
+        var _this = this;
+        var arr = []
+        WzwScreen.each(_this.option.atomRowCount, function (num, rowIndex) {
+            arr[rowIndex] = [];
+            WzwScreen.each(_this.option.atomColCount, function (num2, colIndex) {
+                arr[rowIndex][colIndex] = valueAdapter ? valueAdapter(rowIndex, colIndex) : 0;
+            });
+        });
+        return arr;
+    }
+
+    /**
      * 执行指定动画，这些动画需要时来自: WzwScreen.ANIM 里面的。
      * @param anim 某个动画
      * @param cb 当动画里的每一组动画执行到完成时的回调。
      */
     WzwScreen.prototype.playAnim = function (anim, cb) {
+        if (!anim) {
+            throw new Error("请指定要执行的动画。");
+        }
+
         var _this = this;
         var animResult = anim.call(_this);
 
         // 生成动画数组
-        var animArr = [];
-        WzwScreen.each(_this.option.atomRowCount, function (v, rowIndex) {
-            animArr[rowIndex] = [];
-            WzwScreen.each(_this.option.atomColCount, function (v2, colIndex) {
-                animArr[rowIndex][colIndex] = 0;
-            });
-        });
-        _this.animArr = animArr;
+        _this.animArr = _this.makeNewArr();
 
         // 做一个简单的验证，必须时间配置和动画组个数相同。
         if (animResult.animArr.length !== animResult.animTime.length) {
@@ -88,13 +102,7 @@
         var _this = this;
 
         // 初始化点阵数据。
-        _this.atoms = [];
-        WzwScreen.each(_this.option.atomRowCount, function (value, row) {
-            _this.atoms[row] = [];
-            WzwScreen.each(_this.option.atomColCount, function (value, col) {
-                _this.atoms[row][col] = 0;
-            });
-        });
+        _this.atoms = _this.makeNewArr();
 
         // 初始化状态数据。
         _this.statusAtoms = [];
@@ -315,16 +323,11 @@
     // 获取一个二维数组，这个二维数组里面的每个一维数组里的每个值其实也是一个数组（本质上整个二维数组是一个三维数组，我这样注释可能更容易理解），
     // 这个数组只有2个元素，第一个元素是当前值所在的rowIndex，第二个则是对应的colIndex。
     // 这么说起来，本方法返回的就是一个三维数组，每个一维数组保存了这个一维数组自身所在的位置信息。
+    // 本方法的执行需要通过WzwGame实例。
     function getAtomPositionArr() {
-        var _this = this;
-        var arr = [];
-        WzwScreen.each(_this.option.atomRowCount, function (num, rowIndex) {
-            arr[rowIndex] = [];
-            WzwScreen.each(_this.option.atomColCount, function (num2, colIndex) {
-                arr[rowIndex][colIndex] = [rowIndex, colIndex];
-            });
+        return this.makeNewArr(function (rowIndex, colIndex) {
+            return [rowIndex, colIndex];
         });
-        return arr;
     }
 
 
@@ -359,6 +362,21 @@
                 cb && cb(i, i-1, arr);
             }
         }
+    }
+
+    /**
+     * 循环方法，这个方法用于循环二维数组。
+     * @param arr
+     * @param cb
+     */
+    WzwScreen.each2 = function (arr, cb/*(val, rowIndex, colIndex, arr)*/) {
+        if (!arr) return;
+        if (!cb) return;
+        WzwScreen.each(arr.length, function (row, rowIndex) {
+            WzwScreen.each(row, function (col, colIndex) {
+                cb(col, rowIndex, colIndex, arr);
+            });
+        });
     }
 
     /**
@@ -443,6 +461,7 @@
      *
      * */
     WzwScreen.ANIM = {
+        // 旋转动画
         CIRCLE: function () {
             // 旋转动画，需要具备旋转的效果。为了构建动画帧，需要先有下面所描述的算法实现。
             //
@@ -509,13 +528,7 @@
             // 开始根据这个一维数组构建动画帧
             var animGroup1 = [];
             WzwScreen.each(result, function (positionArr, index/*这里的index是从0开始的，所以下面的循环+1了*/) {
-                var fram = []; // 帧数组。
-                WzwScreen.each(_this.option.atomRowCount, function (num, rowIndex) {
-                    fram[rowIndex] = [];
-                    WzwScreen.each(_this.option.atomColCount, function (num2, colIndex) {
-                        fram[rowIndex][colIndex] = 0;
-                    });
-                });
+                var fram = _this.makeNewArr(); // 帧数组。
                 WzwScreen.each(index + 1, function (val, jndex) {
                     var ps = result[jndex];
                     fram[ps[0]][ps[1]] = 1;
@@ -533,7 +546,53 @@
                     1800
                 ]
             };
-        }
+        },
+
+        // 从底部到顶部遮盖动画
+        B2T: function () {
+            var _this = this;
+
+            var animGroup = [];
+            WzwScreen.each(_this.option.atomRowCount, function (row, rowIndex) {
+                rowIndex = _this.option.atomRowCount - row;
+
+                var frame = _this.makeNewArr();
+                for (var i = rowIndex; i < _this.option.atomRowCount; i++) {
+                    for (var j = 0; j < _this.option.atomColCount; j++) {
+                        frame[i][j] = 1;
+                    }
+                }
+
+                animGroup.push(frame);
+            });
+
+            return {
+                animArr:  [animGroup, animGroup.concat([]).reverse()],
+                animTime: [700,      700]
+            }
+        },
+
+        // 从顶部到底部遮盖动画
+        T2B: function () {
+            var _this = this;
+
+            var animGroup = [];
+            WzwScreen.each(_this.option.atomRowCount, function (row, rowIndex) {
+                var frame = _this.makeNewArr();
+                for (var i = 0; i <= rowIndex; i++) {
+                    for (var j = 0; j < _this.option.atomColCount; j++) {
+                        frame[i][j] = 1;
+                    }
+                }
+
+                animGroup.push(frame);
+            });
+
+            return {
+                animArr:  [animGroup, animGroup.concat([]).reverse()],
+                animTime: [700,      700]
+            }
+        },
     }
 
     window.WzwScreen = WzwScreen;
