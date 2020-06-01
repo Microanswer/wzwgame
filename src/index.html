@@ -4,24 +4,15 @@
     <meta charset="UTF-8">
     <title>王中王游戏机</title>
     <script src="wzwScreen.js"></script>
+    <script src="wzwLauncher.js"></script>
 </head>
 <body>
 <div id="screen"></div>
 <br>
 <br>
 <br>
-<button onclick="playd(WzwScreen.ANIM.CIRCLE)">播放旋转动画</button>
-<button onclick="playd(WzwScreen.ANIM.B2T)">播放抹除动画1</button>
-<button onclick="playd(WzwScreen.ANIM.T2B)">播放抹除动画2</button>
-<button onclick="playd(WzwScreen.ANIM.COP)">播放揭露动画</button>
 <script>
-    var s = new WzwScreen("#screen");
-
-    function playd(anim) {
-        s.playAnim(anim, function (animName, index) {
-            console.log(`${animName}动画的第${index}组动画完成`);
-        });
-    }
+    new WzwLauncher("#screen");
 </script>
 </body>
 </html>
