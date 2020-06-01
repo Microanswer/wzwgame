@@ -34,6 +34,14 @@
         });
     }
 
+    /**
+     * 注册一个游戏到启动器里面。
+     * @param game
+     */
+    WzwLauncher.prototype.regGame = function (game) {
+
+    };
+
     function logicUpdate () {
 
         // 还没开机，什么都不做，直接返回。
