@@ -102,7 +102,9 @@
         var _this = this;
 
         // 初始化点阵数据。
-        _this.atoms = _this.makeNewArr();
+        _this.atoms = _this.makeNewArr(function () {
+            // return  Math.floor(Math.random()*2);
+        });
 
         // 初始化状态数据。
         _this.statusAtoms = [];
@@ -200,12 +202,17 @@
         var ofs = ctx.fillStyle;
         var oss = ctx.strokeStyle;
         var olw = ctx.lineWidth;
-        WzwScreen.each(_this.atoms, function (row, rowIndex, atoms) {
+        WzwScreen.each(_this.option.atomRowCount, function (rowN, rowIndex) {
             offsetRow += _this.drawParam.atomSpace;
             offsetCol = 0;
-            WzwScreen.each(row, function (col, colIdex, row) {
+            WzwScreen.each(_this.option.atomColCount, function (colN, colIdex) {
                 offsetCol += _this.drawParam.atomSpace;
-                renderAtom.call(_this, ctx, col, offsetRow, offsetCol);
+
+                var col = 0;
+                if (_this.atoms) {
+                    col = _this.atoms[rowIndex][colIdex];
+                    renderAtom.call(_this, ctx, col, offsetRow, offsetCol);
+                }
 
                 // 如果有动画数组被赋值，说明希望进行动画，这里进行绘制。
                 if (_this.animArr) {
@@ -301,13 +308,13 @@
             }
 
             // 为动画数组动态加入数据，这样绘制的时候就会慢慢显示。
-            WzwScreen.scroll(0, animGroup.length - 1, {
+            WzwScreen.scroll(0, animGroup.length, {
                 goo: applyFramOf,
                 end: function (end) {
                     // 执行到end时再调一次，使界面会有一个从头到为完整的过程。
                     applyFramOf(end);
 
-                    cb && cb(animIndex);
+                    cb && cb(animResult.animName, animIndex);
 
                     // 本组动画完成，继续下一组。
                     applyAnim.call(_this, animResult, animIndex + 1, cb);
@@ -537,6 +544,7 @@
             });
 
             return {
+                animName: "CIRCLE",
                 animArr: [
                     animGroup1, // -----------------------
                     animGroup1.concat([]).reverse() //   |
@@ -567,6 +575,7 @@
             });
 
             return {
+                animName: "B2T",
                 animArr:  [animGroup, animGroup.concat([]).reverse()],
                 animTime: [700,      700]
             }
@@ -589,10 +598,51 @@
             });
 
             return {
+                animName: "T2B",
                 animArr:  [animGroup, animGroup.concat([]).reverse()],
                 animTime: [700,      700]
             }
         },
+
+        // 从顶部和底部同时进行遮盖，然后打开。
+        COP: function () {
+            var _this = this;
+
+            var animGroup = [];
+
+            var rowIndex = 0;
+            var i = 0, j = 0;
+            while(true) {
+                var topRow = rowIndex;
+                var bottomRow = _this.option.atomRowCount - (rowIndex + 1);
+
+                var frame = _this.makeNewArr();
+                for (i = 0; i <= topRow; i++) {
+                    for (j = 0; j < _this.option.atomColCount; j++) {
+                        frame[i][j] = 1;
+                    }
+                }
+
+                for (i = _this.option.atomRowCount - 1; i >= bottomRow; i--) {
+                    for (j = 0; j < _this.option.atomColCount; j++) {
+                        frame[i][j] = 1;
+                    }
+                }
+                animGroup.push(frame);
+
+                if (topRow === bottomRow || Math.abs(topRow - bottomRow) === 1) {
+                    break;
+                }
+
+                rowIndex++;
+            }
+
+            return {
+                animName: "COP",
+                animArr:  [animGroup, animGroup.concat([]).reverse()],
+                animTime: [600,      600]
+            }
+        }
     }
 
     window.WzwScreen = WzwScreen;
