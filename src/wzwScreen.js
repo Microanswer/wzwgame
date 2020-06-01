@@ -464,15 +464,22 @@
      * @param tar 目标二维数组
      * @param rowIndex 目标二维数组的行号
      * @param colIndex 目标二维数组的列好
+     * @param valueAdapter 自定义融合规则， 不传递则是 直接将src里覆盖对应tar里的内容。
      */
-    WzwScreen.mergeArr = function(src, tar, rowIndex, colIndex) {
+    WzwScreen.mergeArr = function(src, tar, rowIndex, colIndex, valueAdapter) {
         rowIndex = rowIndex || 0;
         colIndex = colIndex || 0;
 
         WzwScreen.each(src, function (rowN, rowI) {
             WzwScreen.each(rowN, function (colN, colI) {
                 if (rowI + rowIndex < tar.length && colI + colIndex < tar[rowI].length) {
-                    tar[rowI +rowIndex][colI + colIndex] = colN;
+                    if (valueAdapter) {
+                        var tarRowIndex = rowI + rowIndex;
+                        var tarColIndex = colI + colIndex;
+                        tar[tarRowIndex][tarColIndex] = valueAdapter(tarRowIndex, tarColIndex, rowI, colI);
+                    } else {
+                        tar[rowI + rowIndex][colI + colIndex] = colN;
+                    }
                 }
             });
         });
