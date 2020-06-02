@@ -1,10 +1,10 @@
 ;(function (window) {
 
     var DEFAULT_OPTION = {
-        width:         320,           // 游戏屏幕宽度
+        width:         330,           // 游戏屏幕宽度
         height:        430,           // 游戏屏幕高度
-        atomRowCount:  20,            // 点阵行数
-        atomColCount:  10,            // 点阵列数
+        atomRowCount:  21,            // 点阵行数
+        atomColCount:  11,            // 点阵列数
         atomBorder:    2,             // 点阵边框大小
         atomInset:     3.5,           // 点阵内空白大小
         atomSpace:     4,             // 点阵间距
@@ -53,7 +53,7 @@
      */
     WzwScreen.prototype.reset = function () {
         init.call(this);
-    }
+    };
 
     /**
      * 返回一个点阵二维数组，这个二维数组的大小和构建实例时相同。
@@ -70,7 +70,7 @@
             });
         });
         return arr;
-    }
+    };
 
     /**
      * 执行指定动画，这些动画需要时来自: WzwScreen.ANIM 里面的。
@@ -94,7 +94,7 @@
         }
 
         applyAnim.call(_this, animResult, 0, cb);
-    }
+    };
 
     /**
      * 更新游戏点阵数组，传入一个二维数组，大小需要和配置的点阵大小相同。
@@ -102,7 +102,7 @@
      */
     WzwScreen.prototype.updateAtomArr = function (atomsArr) {
         this.atoms = atomsArr;
-    }
+    };
 
     /**
      * 注册逻辑执行方法，被注册的方法会不停的被执行。
@@ -110,7 +110,7 @@
      */
     WzwScreen.prototype.regLogic = function (cb) {
         this.logicFun = cb;
-    }
+    };
 
 
     // 初始化数据 - 重置游戏时也可以调用此方法。
@@ -128,7 +128,7 @@
         WzwScreen.each(4, function (value, row) {
             _this.statusAtoms[row] = [];
             WzwScreen.each(4, function (value, col) {
-                _this.statusAtoms[row][col] = Math.floor(Math.random()*2);
+                _this.statusAtoms[row][col] =0;
             });
         });
 

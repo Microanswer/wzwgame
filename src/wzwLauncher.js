@@ -36,11 +36,31 @@
 
     /**
      * 注册一个游戏到启动器里面。
-     * @param game
+     * @param letter 游戏序号
+     * @param game 游戏
      */
-    WzwLauncher.prototype.regGame = function (game) {
-
+    WzwLauncher.prototype.regGame = function (letter, game) {
+        this.games.push({
+            game: game,
+            letter: letter
+        });
     };
+
+    /**
+     * 切换到下一个游戏
+     */
+    WzwLauncher.prototype.nextGame = function () {
+        if (this.current >= this.games.length - 1) return;
+        this.current++;
+    }
+
+    /**
+     * 切换到上一个游戏
+     */
+    WzwLauncher.prototype.prevGame = function () {
+        if (this.current <= 0) return;
+        this.current--;
+    }
 
     function logicUpdate () {
 
@@ -56,10 +76,15 @@
             return;
         }
 
+        // 使用当前选中的游戏进行预览渲染。
+        this.atoms = getPreviewAtoms.call(this);
+        this.screen.updateAtomArr(this.atoms);
     }
 
     function boot() {
+        this.letterCache = {};
         this.booted = true;
+        this.current = 0;
     }
 
     // 没有注册任何游戏时，显示的无游戏提示。
@@ -80,6 +105,39 @@
         WzwScreen.mergeArr(WzwScreen.LETTER["M"], _this.emptyArr, flag + 1, 2);
         console.log("目前还没有注册任何游戏。");
         return this.emptyArr;
+    }
+
+    // 获取当前选中的游戏的预览点阵。
+    function getPreviewAtoms () {
+        // 预览界面分为上下两部分，上面为黑色背景，白色文字，渲染游戏序号。
+        // 下面为游戏内容预览界面。
+        var _this = this;
+
+        var game = _this.games[this.current];
+        var preAtoms = _this.letterCache[game.letter];
+        var flag = Math.floor(_this.screen.option.atomRowCount / 2);
+        if (!preAtoms) {
+            var letterArr = WzwScreen.LETTER[game.letter];
+            preAtoms = _this.screen.makeNewArr(function (row, col) {
+                if (row <= flag) {
+                    var positionRow = row - 3;
+                    var positionCol = col - 3;
+                    if (letterArr.length > positionRow && positionRow > -1 && letterArr[positionRow].length > positionCol && positionCol > -1) {
+                        return letterArr[positionRow][positionCol] === 0 ? 1 : 0;
+                    } else {
+                        return 1;
+                    }
+                } else {
+                    return 0;
+                }
+            });
+            _this.letterCache[game.letter] = preAtoms;
+        }
+
+        // 从游戏本身上面获取游戏预览效果。
+        WzwScreen.mergeArr(game.game.getPreviewAtoms(), preAtoms, flag + 1, 0);
+
+        return preAtoms;
     }
 
     window.WzwLauncher = WzwLauncher;

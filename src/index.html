@@ -5,14 +5,26 @@
     <title>王中王游戏机</title>
     <script src="wzwScreen.js"></script>
     <script src="wzwLauncher.js"></script>
+    <script src="gameTetris.js"></script>
+    <script src="gameTank.js"></script>
 </head>
 <body>
 <div id="screen"></div>
 <br>
-<br>
-<br>
+<button onclick="prev()">上一个游戏</button>
+<button onclick="next()">下一个游戏</button>
 <script>
-    new WzwLauncher("#screen");
+    var launch = new WzwLauncher("#screen");
+    launch.regGame("A", new Tetris());
+    launch.regGame("B", new Tank());
+
+    function prev() {
+        launch.prevGame();
+    }
+
+    function next() {
+        launch.nextGame();
+    }
 </script>
 </body>
 </html>
