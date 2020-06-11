@@ -10,6 +10,11 @@
         initPreview.call(this);
     }
 
+    // 当游戏实列被注册到launch时调用。
+    Tank.prototype.onRegLaunch = function (launch) {
+        this.launch = launch;
+    };
+
     Tank.prototype.getPreviewAtoms = function () {
         if (Date.now() - this.preview_lasttime >= this.preview_timespace) {
             this.preview_index++;

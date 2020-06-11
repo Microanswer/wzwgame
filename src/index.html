@@ -11,12 +11,17 @@
 <body>
 <div id="screen"></div>
 <br>
+<button onclick="start()">开始游戏</button>
 <button onclick="prev()">上一个游戏</button>
 <button onclick="next()">下一个游戏</button>
 <script>
     var launch = new WzwLauncher("#screen");
     launch.regGame("A", new Tetris());
     launch.regGame("B", new Tank());
+
+    function start() {
+        launch.start();
+    }
 
     function prev() {
         launch.prevGame();

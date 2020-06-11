@@ -105,6 +105,14 @@
     };
 
     /**
+     * 跟新游戏状态点阵。
+     * @param atomsArr
+     */
+    WzwScreen.prototype.updateStatusAtoms = function (atomsArr) {
+        this.statusAtoms = atomsArr;
+    }
+
+    /**
      * 注册逻辑执行方法，被注册的方法会不停的被执行。
      * @param cb 回调函数。
      */
@@ -124,13 +132,7 @@
         _this.atoms = undefined;
 
         // 初始化状态数据。
-        _this.statusAtoms = [];
-        WzwScreen.each(4, function (value, row) {
-            _this.statusAtoms[row] = [];
-            WzwScreen.each(4, function (value, col) {
-                _this.statusAtoms[row][col] =0;
-            });
-        });
+        _this.statusAtoms = undefined;
 
         this.score  = 0;
         this.paused = false;
@@ -299,12 +301,12 @@
         // 绘制预备点阵
         var offsetRow = fontOffsetY + 5;
         var offsetCol = fontOffsetX;
-        WzwScreen.each(_this.statusAtoms, function (row) {
+        WzwScreen.each(4, function (rowVal, row) {
             offsetRow += _this.drawParam.atomSpace;
             offsetCol = fontOffsetX;
-            WzwScreen.each(row, function (col) {
+            WzwScreen.each(4, function (colVal, col) {
                 offsetCol += _this.drawParam.atomSpace;
-                renderAtom.call(_this, ctx, col, offsetRow, offsetCol);
+                renderAtom.call(_this, ctx, _this.statusAtoms?_this.statusAtoms[row][col]:0, offsetRow, offsetCol);
                 offsetCol += _this.drawParam.atomWidth;
             });
             offsetRow += _this.drawParam.atomHeight;
@@ -473,16 +475,29 @@
         WzwScreen.each(src, function (rowN, rowI) {
             WzwScreen.each(rowN, function (colN, colI) {
                 if (rowI + rowIndex < tar.length && colI + colIndex < tar[rowI].length) {
+                    var tarRowIndex = rowI + rowIndex;
+                    var tarColIndex = colI + colIndex;
+                    if (tarColIndex < 0 || tarRowIndex < 0) {
+                        return;
+                    }
+
                     if (valueAdapter) {
-                        var tarRowIndex = rowI + rowIndex;
-                        var tarColIndex = colI + colIndex;
                         tar[tarRowIndex][tarColIndex] = valueAdapter(tarRowIndex, tarColIndex, rowI, colI);
                     } else {
-                        tar[rowI + rowIndex][colI + colIndex] = colN;
+                        tar[tarRowIndex][tarColIndex] = colN;
                     }
                 }
             });
         });
+    }
+
+    /**
+     * 产生一个 [start, end) 之间的随机数
+     * @param start
+     * @param end
+     */
+    WzwScreen.random = function(start, end) {
+        return Math.floor((Math.random() * (end - start)) + start);
     }
 
 

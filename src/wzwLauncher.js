@@ -21,6 +21,9 @@
         // 建立绘制数组
         this.atoms = undefined;
 
+        // 当前正在进行的游戏。
+        this.currentGame = undefined;
+
         // 注册逻辑方法。
         this.screen.regLogic(logicUpdate.bind(this));
 
@@ -30,6 +33,8 @@
             if (index === 0) {
                 // 此时动画跑满屏了，立即开机。
                 boot.call(_this);
+            } else if (index === 1) {
+                _this.booted = true;
             }
         });
     }
@@ -44,12 +49,14 @@
             game: game,
             letter: letter
         });
+        game.onRegLaunch(this);
     };
 
     /**
      * 切换到下一个游戏
      */
     WzwLauncher.prototype.nextGame = function () {
+        if (this.currentGame) return; // 当前正在玩一个游戏时不切换。
         if (this.current >= this.games.length - 1) return;
         this.current++;
     }
@@ -58,14 +65,45 @@
      * 切换到上一个游戏
      */
     WzwLauncher.prototype.prevGame = function () {
+        if (this.currentGame) return; // 当前正在玩一个游戏时不切换。
         if (this.current <= 0) return;
         this.current--;
+    }
+
+    /**
+     * 开始当前选中的游戏游戏
+     */
+    WzwLauncher.prototype.start = function () {
+        var _this = this;
+
+        if (_this.booted && _this.games.length > 0) {
+
+            // 在没有进行任何游戏的状态才进行游戏开始的调用。
+            if (!_this.currentGame) {
+
+                _this.screen.playAnim(WzwScreen.ANIM.COP, function (animName, index) {
+                    if (index === 0) {
+                        _this.currentGame = _this.games[_this.current].game;
+                    } else if (index === 1) {
+                        _this.currentGame.onLaunch();
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * 退出当前正在进行的游戏。
+     */
+    WzwLauncher.prototype.exitCurentGame = function () {
+        var _this = this;
+        _this.currentGame = undefined;
     }
 
     function logicUpdate () {
 
         // 还没开机，什么都不做，直接返回。
-        if (!this.booted) {
+        if (!this.booting) {
             return;
         }
 
@@ -76,14 +114,25 @@
             return;
         }
 
-        // 使用当前选中的游戏进行预览渲染。
-        this.atoms = getPreviewAtoms.call(this);
+        // 如果正在玩某个游戏，则直接渲染这个游戏。
+        if (this.currentGame) {
+            this.atoms = this.currentGame.onUpdate();
+            this.statusAtoms = this.currentGame.onUpdateStatus();
+        } else {
+
+            // 使用当前选中的游戏进行预览渲染。
+            this.atoms = getPreviewAtoms.call(this);
+        }
+
+
+
         this.screen.updateAtomArr(this.atoms);
+        this.screen.updateStatusAtoms(this.statusAtoms);
     }
 
     function boot() {
         this.letterCache = {};
-        this.booted = true;
+        this.booting = true;
         this.current = 0;
     }
 
