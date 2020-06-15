@@ -3,6 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <title>王中王游戏机</title>
+    <style>
+        tr td {
+            text-align: center;
+        }
+        .btn {
+            border-radius: 50%;
+            border: 1px solid gray;
+
+            width: 35px;
+            height: 35px;
+            cursor: pointer;
+            display-role: button;
+        }
+        .btn.small {
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn.hide {
+            opacity: 0;
+        }
+        .btn.big {
+            width: 60px;
+            height: 60px;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-center.small {
+            font-size: 12px;
+        }
+    </style>
     <script src="wzwScreen.js"></script>
     <script src="wzwLauncher.js"></script>
     <script src="gameTetris.js"></script>
@@ -11,6 +43,47 @@
 <body>
 <div id="screen"></div>
 <br>
+<table>
+    <tr>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn" onclick="press('up')">上</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td rowspan="3"><button class="big btn" onclick="press('rotate')">旋转</button></td>
+    </tr>
+    <tr>
+        <td><button class="btn" onclick="press('left')">左</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn" onclick="press('right')">右</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+    </tr>
+    <tr>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn" onclick="press('down')">下</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+    </tr>
+    <tr>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn small" onclick="press('start')"></button><div class="text-center small">开始</div></td>
+        <td><button class="btn small" onclick="press('voice')"></button><div class="text-center small">声音</div></td>
+        <td><button class="btn small" onclick="press('onoff')"></button><div class="text-center small">开关</div></td>
+        <td><button class="btn small" onclick="press('reset')"></button><div class="text-center small">复位</div></td>
+        <td><button class="btn hide">　</button></td>
+    </tr>
+</table>
 <button onclick="start()">开始游戏</button>
 <button onclick="prev()">上一个游戏</button>
 <button onclick="next()">下一个游戏</button>
@@ -29,6 +102,10 @@
 
     function next() {
         launch.nextGame();
+    }
+
+    function press(key) {
+        launch.pressKey(key);
     }
 </script>
 </body>

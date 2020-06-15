@@ -4,8 +4,6 @@
 
     /**
      * 游戏启动器。在玩家打开页面时(就认为在开机游戏机)运行的就是这个启动器，启动器里有很多个游戏可以选择， 每个游戏提供了序号，预览动画。
-     * launcher 接受了来自鼠标、键盘、触摸的所有事件，这些事件将使玩家可以在各个游戏间经行选择，
-     * 当玩家选择了了一个游戏后，所有事件将分发给玩家选择的游戏。
      *
      * 启动器是依赖 WzwScreen 类作为显示依托的。
      * @constructor
@@ -27,16 +25,13 @@
         // 注册逻辑方法。
         this.screen.regLogic(logicUpdate.bind(this));
 
-        // 播放开机动画
-        var _this = this;
-        this.screen.playAnim(WzwScreen.ANIM.CIRCLE, function (animName, index) {
-            if (index === 0) {
-                // 此时动画跑满屏了，立即开机。
-                boot.call(_this);
-            } else if (index === 1) {
-                _this.booted = true;
-            }
-        });
+        this.letterCache = {};
+
+
+        this.current = 0;
+
+        // 楷鸡
+        this.reboot();
     }
 
     /**
@@ -75,6 +70,11 @@
      */
     WzwLauncher.prototype.start = function () {
         var _this = this;
+        if (!_this.starting) {
+            _this.starting = true;
+        } else {
+            return; // 正在开始某个游戏，动画进行中，不响应其它的start调用。
+        }
 
         if (_this.booted && _this.games.length > 0) {
 
@@ -84,6 +84,7 @@
                 _this.screen.playAnim(WzwScreen.ANIM.COP, function (animName, index) {
                     if (index === 0) {
                         _this.currentGame = _this.games[_this.current].game;
+                        _this.starting = false;
                     } else if (index === 1) {
                         _this.currentGame.onLaunch();
                     }
@@ -100,10 +101,86 @@
         _this.currentGame = undefined;
     }
 
+    /**
+     * 重启，其实就是复位的功能。
+     */
+    WzwLauncher.prototype.reboot = function () {
+        // 播放开机动画
+        var _this = this;
+        _this.booting = true;
+        _this.booted = false;
+        _this.screen.playAnim(WzwScreen.ANIM.CIRCLE, function (animName, index) {
+            if (index === 0) {
+                // 此时动画跑满屏了。
+                if(_this.currentGame) {
+                    _this.currentGame.onDestroy && _this.currentGame.onDestroy();
+                }
+                _this.currentGame = null; // 清除当前正在玩的游戏。
+            } else if (index === 1) {
+                _this.booting = false;
+                _this.booted = true;
+            }
+        });
+    }
+
+    WzwLauncher.prototype.pressUp     = function () {press.call(this, "up");    }  // 按下游戏机"上"按钮
+    WzwLauncher.prototype.pressRight  = function () {press.call(this, "right"); }  // 按下游戏机"右"按钮
+    WzwLauncher.prototype.pressDown   = function () {press.call(this, "down");  }  // 按下游戏机"下"按钮
+    WzwLauncher.prototype.pressLeft   = function () {press.call(this, "left");  }  // 按下游戏机"左"按钮
+    WzwLauncher.prototype.pressRotate = function () {press.call(this, "rotate");}  // 按下游戏机"旋转"按钮，就是最大的那个按键。
+    WzwLauncher.prototype.pressStart  = function () {press.call(this, "start"); }  // 按下游戏机"开始"按钮
+    WzwLauncher.prototype.pressVoice  = function () {press.call(this, "voice"); }  // 按下游戏机"声音"按钮
+    WzwLauncher.prototype.pressOnOff  = function () {press.call(this, "onoff"); }  // 按下游戏机"开关"按钮
+    WzwLauncher.prototype.pressReset  = function () {press.call(this, "reset"); }  // 按下游戏机"复位"按钮
+    WzwLauncher.prototype.pressKey    = function (key) {
+        press.call(this, key);
+    }
+
+    /**
+     * 模拟按下某个按钮
+     * @param key
+     */
+    function press(key) {
+        // 还没开机
+        if (!this.booted) {
+            return;
+        }
+
+        // 没有注册任何游戏
+        if (!this.games || this.games.length < 1) {
+            return;
+        }
+
+        // 当前在运行游戏。
+        if (this.currentGame) {
+            this.currentGame.onKeypress && this.currentGame.onKeypress(key);
+        } else {
+            if ("rotate" === key) {
+                // 没开始游戏时，就使用此按钮进行多个游戏间的切换。
+                if (this.current >= this.games.length - 1) {
+                    this.current = 0;
+                } else {
+                    this.current ++;
+                }
+                return;
+            } else if ("start" === key) {
+                this.start();
+                return;
+            }
+        }
+
+        if ("reset" === key) {
+            this.reboot();
+            return;
+        }
+
+    }
+
+
     function logicUpdate () {
 
         // 还没开机，什么都不做，直接返回。
-        if (!this.booting) {
+        if (!this.booting && !this.booted) {
             return;
         }
 
@@ -119,7 +196,7 @@
             this.atoms = this.currentGame.onUpdate();
             this.statusAtoms = this.currentGame.onUpdateStatus();
         } else {
-
+            // 没有正在玩游戏，则渲染这个游戏的预览界面。
             // 使用当前选中的游戏进行预览渲染。
             this.atoms = getPreviewAtoms.call(this);
         }
@@ -128,12 +205,6 @@
 
         this.screen.updateAtomArr(this.atoms);
         this.screen.updateStatusAtoms(this.statusAtoms);
-    }
-
-    function boot() {
-        this.letterCache = {};
-        this.booting = true;
-        this.current = 0;
     }
 
     // 没有注册任何游戏时，显示的无游戏提示。

@@ -200,10 +200,6 @@
      * @constructor
      */
     function Tetris() {
-
-        // 初始状态为游戏结束。
-        this.status = GAME_STATUS.OVER;
-
         // 初始化游戏预览。
         initPreview.call(this);
     }
@@ -237,20 +233,25 @@
         this.level = 0;
 
         // 初始化当前材料
-        this.stuff = getRandomStuff.call(this);
+        this.stuff = null;
         this.stuffOffsetRow = STUFF_OFFSET_ROW;
         this.stuffOffsetCol = STUFF_OFFSET_COL;
 
         // 初始化下一个材料
-        this.nextStuff = getRandomStuff.call(this);
+        this.nextStuff = null;
 
         this.gameLastTime = 0;
 
+        // 初始状态为游戏结束。
+        this.status = GAME_STATUS.OVER;
     };
 
     // 游戏启动时调用此方法
     Tetris.prototype.onLaunch = function () {
         this.reset();
+        this.stuff = getRandomStuff.call(this);
+        // 初始化下一个材料
+        this.nextStuff = getRandomStuff.call(this);
         this.status = GAME_STATUS.PLAYING;
     };
 
@@ -267,17 +268,20 @@
                     return _this.atomsed[r][c];
                 });
                 try {
-                    var stuffUsed = merge.call(_this, _this.atoms, _this.stuff, _this.stuffOffsetRow, _this.stuffOffsetCol);
-                    if (stuffUsed) {
+                    if (_this.stuffUsed) {
                         // 材料被使用了，初始化新的材料。
-                        _this.atomsed = _this.atoms;
                         _this.stuff = _this.nextStuff;
                         _this.nextStuff = getRandomStuff.call(_this);
                         _this.stuffOffsetRow = STUFF_OFFSET_ROW;
                         _this.stuffOffsetCol = STUFF_OFFSET_COL;
-                    } else {
+                    }
+                    _this.stuffUsed = merge.call(_this, _this.atoms, _this.stuff, _this.stuffOffsetRow, _this.stuffOffsetCol);
+
+                    if (!_this.stuffUsed){
                         // 材料没被使用，继续下降。
                         _this.stuffOffsetRow += 1;
+                    } else {
+                        _this.atomsed = _this.atoms;
                     }
                 } catch (e) {
                     if (e.message === "gameover") {
@@ -290,6 +294,7 @@
                 }
 
             } else if (_this.status === GAME_STATUS.PAUSE) {
+                // 游戏已暂停了。
 
             } else if (_this.status === GAME_STATUS.OVER) {
 
@@ -306,6 +311,33 @@
     Tetris.prototype.onUpdateStatus = function () {
         return this.nextStuff;
     };
+
+    // 暂停游戏，暂停游戏时不展示下一个材料
+    Tetris.prototype.pause = function () {
+        if (this.status === GAME_STATUS.PLAYING) {
+            this.status = GAME_STATUS.PAUSE;
+            this.tempNextStuff = this.nextStuff;
+            this.nextStuff = null;
+        } else {
+            this.status = GAME_STATUS.PLAYING;
+            this.nextStuff = this.tempNextStuff;
+            this.tempNextStuff = null;
+        }
+
+    }
+
+    // 此方法在按下对应按钮时会执行。
+    Tetris.prototype.onKeypress = function (key) {
+        // 按下了复位按钮，就让游戏暂停。使得界面不动。
+        if ("reset" === key) {
+            this.pause();
+        }
+    }
+
+    // 此方法当用户按复位时，动画执行到满屏，会调用，游戏应该清除自己的状态。
+    Tetris.prototype.onDestroy = function () {
+        this.reset();
+    }
 
     // 游戏结束时执行此方法
     function doGameOver() {
