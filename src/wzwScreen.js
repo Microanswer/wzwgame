@@ -120,6 +120,18 @@
         this.logicFun = cb;
     };
 
+    WzwScreen.prototype.setLevel = function (level) {
+        this.level = level;
+    }
+
+    WzwScreen.prototype.setScore = function (score) {
+        this.score = score;
+    }
+
+    WzwScreen.prototype.setPause = function (pause) {
+        this.paused = pause;
+    }
+
 
     // 初始化数据 - 重置游戏时也可以调用此方法。
     function init() {
@@ -312,6 +324,14 @@
             offsetRow += _this.drawParam.atomHeight;
         });
 
+        // 绘制暂停标识。
+        ctx.fillStyle = this.paused ? this.option.color1 : this.option.color2;
+
+        fontOffsetY = offsetRow + 5;
+        ctx.font = _this.drawParam.fontItalic;
+        ctx.fillText("PAUSED", fontOffsetX, fontOffsetY += this.option.fontHeight);
+
+
         ctx.font        = of;
         ctx.strokeStyle = oss;
         ctx.fillStyle   = ofs;
@@ -489,6 +509,42 @@
                 }
             });
         });
+    }
+
+    /**
+     * 二维数组融合方法，和 mergeArr 不一样的是， 此方法将结果返回，而不修改 tar.
+     * @param src
+     * @param tar
+     * @param rowIndex
+     * @param colIndex
+     * @param valueAdapter
+     */
+    WzwScreen.mergeArr2 = function(src, tar, rowIndex, colIndex, valueAdapter) {
+        rowIndex = rowIndex || 0;
+        colIndex = colIndex || 0;
+        var newArr = [];
+
+        WzwScreen.each(tar, function (row, mRowIndex) {
+            newArr[mRowIndex] = [];
+            WzwScreen.each(row, function (col, mColIndex) {
+                newArr[mRowIndex][mColIndex] = col;
+                if (
+                    mRowIndex >= rowIndex && mColIndex >= colIndex &&
+                    mRowIndex < rowIndex + src.length && mColIndex < colIndex + src[0].length
+                ) {
+                    if (!valueAdapter) {
+                       newArr[mRowIndex][mColIndex] = src[mRowIndex - rowIndex][mColIndex - colIndex];
+                    } else {
+                       newArr[mRowIndex][mColIndex] = valueAdapter(
+                           mRowIndex, mColIndex,
+                           mRowIndex - rowIndex, mColIndex - colIndex
+                       );
+                    }
+                }
+            });
+        });
+
+        return newArr;
     }
 
     /**

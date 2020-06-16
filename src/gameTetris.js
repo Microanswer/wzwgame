@@ -232,13 +232,8 @@
         // 当前等级
         this.level = 0;
 
-        // 初始化当前材料
-        this.stuff = null;
         this.stuffOffsetRow = STUFF_OFFSET_ROW;
         this.stuffOffsetCol = STUFF_OFFSET_COL;
-
-        // 初始化下一个材料
-        this.nextStuff = null;
 
         this.gameLastTime = 0;
 
@@ -261,28 +256,63 @@
         if (!_this.atoms) return ;
 
         // 根据当前游戏等级来更新数据。
-        if ((Date.now() - _this.gameLastTime) > LEVELS[_this.level]) {
+        var now = Date.now();
+        if ((now - _this.gameLastTime) >= LEVELS[_this.level]) {
+            _this.launch.screen.setLevel(_this.level);
+            // _this.atoms = _this.launch.screen.makeNewArr(function (r, c) {
+            //     return _this.atomsed[r][c];
+            // });
+
             if (_this.status === GAME_STATUS.PLAYING) {
 
-                _this.atoms = _this.launch.screen.makeNewArr(function (r, c) {
-                    return _this.atomsed[r][c];
-                });
                 try {
-                    if (_this.stuffUsed) {
-                        // 材料被使用了，初始化新的材料。
-                        _this.stuff = _this.nextStuff;
-                        _this.nextStuff = getRandomStuff.call(_this);
+                    var isNewCurrStuf = false;
+
+                    if (!_this.stuff) {
+                        _this.stuff = _this.nextStuff; /* 始终优先从下一个材料获取 */
+                        _this.nextStuff = null;
+                        isNewCurrStuf = !!_this.stuff;
+                    }
+                    if (!_this.stuff) {
+                        _this.stuff = getRandomStuff.call(_this); /* 通过下一个材料也没能获取到材料，说明这是游戏刚开始，此处可以直接随机获取一个。 */
+                        _this.nextStuff = null;
+                        isNewCurrStuf = !!_this.stuff;
+                    }
+                    if (!_this.nextStuff) {
+                        _this.nextStuff = getRandomStuff.call(_this); /* 产生下一个新材料 */
+                        isNewCurrStuf = !!_this.stuff;
+                    }
+
+                    if (isNewCurrStuf) {
+                        // turboModeOFF(); /*新材料掉下来时关闭急速模式*/
+                    }
+
+
+                    var isGrounded = _isGrounded.call(_this, _this.stuffOffsetCol, _this.stuffOffsetRow, _this.stuff, _this.atomsed);
+                    // _this.stuffUsed = merge.call(_this, _this.atoms, _this.stuff, _this.stuffOffsetRow, _this.stuffOffsetCol);
+                    if (!isGrounded) {
+                        // 没有触底。直接下一个。
+                        _this.stuffOffsetRow += 1;
+                        // 准备新的渲染数组
+                        _this.atoms = WzwScreen.mergeArr2(_this.stuff, _this.atomsed, _this.stuffOffsetRow, _this.stuffOffsetCol,
+                            function (tarRowIndex, tarColIndex, rowI, colI) {
+                                if (_this.stuff[rowI][colI] === 1) {
+                                    return _this.stuff[rowI][colI];
+                                } else {
+                                    return _this.atomsed[tarRowIndex][tarColIndex];
+                                }
+                            });
+                    }
+
+                    if (isGrounded){
+                        // 已经触底了。讲当前全部材料保存。
+                        _this.atomsed = arrCopy(_this.atoms);
+                        // 去除正在下降的材料。
+                        _this.stuff = undefined;
                         _this.stuffOffsetRow = STUFF_OFFSET_ROW;
                         _this.stuffOffsetCol = STUFF_OFFSET_COL;
                     }
-                    _this.stuffUsed = merge.call(_this, _this.atoms, _this.stuff, _this.stuffOffsetRow, _this.stuffOffsetCol);
 
-                    if (!_this.stuffUsed){
-                        // 材料没被使用，继续下降。
-                        _this.stuffOffsetRow += 1;
-                    } else {
-                        _this.atomsed = _this.atoms;
-                    }
                 } catch (e) {
                     if (e.message === "gameover") {
                         // 游戏结束
@@ -318,25 +348,40 @@
             this.status = GAME_STATUS.PAUSE;
             this.tempNextStuff = this.nextStuff;
             this.nextStuff = null;
+            this.launch.screen.setPause(true);
         } else {
             this.status = GAME_STATUS.PLAYING;
             this.nextStuff = this.tempNextStuff;
             this.tempNextStuff = null;
+            this.launch.screen.setPause(false);
         }
 
     }
 
     // 此方法在按下对应按钮时会执行。
     Tetris.prototype.onKeypress = function (key) {
+        var _this = this;
         // 按下了复位按钮，就让游戏暂停。使得界面不动。
-        if ("reset" === key) {
-            this.pause();
+        if ("reset" === key || "start" === key) {
+            _this.pause();
+        } else if ("left" === key) {
+            // 左移动
+            if (_this.status === GAME_STATUS.PAUSE) return;
+            _moveCurrStuff.call(_this, -1);
+        } else if ("right" === key) {
+            if (_this.status === GAME_STATUS.PAUSE) return;
+            _moveCurrStuff.call(_this, 1);
+        } else if ("rotate" === key || "up" === key) {
+            if (_this.status === GAME_STATUS.PAUSE) return;
+            rotateStuff.call(_this);
         }
     }
 
     // 此方法当用户按复位时，动画执行到满屏，会调用，游戏应该清除自己的状态。
     Tetris.prototype.onDestroy = function () {
         this.reset();
+        this.launch.screen.setPause(false);
+        this.launch.exitCurentGame(); // 退出当前游戏
     }
 
     // 游戏结束时执行此方法
@@ -344,10 +389,58 @@
         var _this = this;
         _this.launch.screen.playAnim(WzwScreen.ANIM.B2T, function (animName, index) {
             if (index === 0) {
-                _this.reset();
-                _this.launch.exitCurentGame(); // 退出当前游戏
+                _this.onDestroy();
             }
         });
+    }
+
+    /* 旋转材料。 此方法只有在游戏中有效，可以将正在下落的材料进行顺时针90度旋转。 */
+    function rotateStuff () {
+        var _this = this;
+        if (_this.atoms && _this.stuff && GAME_STATUS.PLAYING === _this.status) {
+            var temp = [[], [], [], []];
+
+            // 进行旋转材料
+            for (var i = 0; i < _this.stuff.length; i++) {
+                for (var j = 0; j < _this.stuff[i].length; j++) {
+
+                    var ni = j;
+                    var nj = _this.stuff.length - 1 - i;
+                    temp[ni][nj] = _this.stuff[i][j];
+
+                    if (_this.stuffOffsetRow + ni < 0) {
+                        /* 材料还没下降到屏幕内 */
+                        continue;
+                    }
+
+                    if (_this.stuffOffsetRow + ni >= _this.atoms.length) {
+                        /*变化会超出屏幕，不准变*/
+                        return;
+                    }
+
+                    if (_this.stuffOffsetCol + nj >= _this.atoms[0].length || _this.stuffOffsetCol + nj < 0) {
+                        return;
+                    }
+
+
+                    /*判断变化后的材料是否和已确定的堆砌产生重叠，产生了则不进行此次变化*/
+                    if (_this.atomsed[_this.stuffOffsetRow + ni][_this.stuffOffsetCol + nj] === 1) {
+                        return;
+                    }
+                }
+            }
+
+            /* 变化了之后，重新赋值数组，让界面变化。 */
+            _this.stuff = temp;
+            _this.atoms = WzwScreen.mergeArr2(_this.stuff, _this.atomsed, _this.stuffOffsetRow, _this.stuffOffsetCol,
+                function (tarRowIndex, tarColIndex, rowI, colI) {
+                    if (_this.stuff[rowI][colI] === 1) {
+                        return _this.stuff[rowI][colI];
+                    } else {
+                        return _this.atomsed[tarRowIndex][tarColIndex];
+                    }
+                });
+        }
     }
 
     // 合并正在下降的材料。返回true表示此材料被消耗(到底了，或则堆砌到了已堆砌的材料上)
@@ -380,6 +473,51 @@
         });
 
         return grounded;
+    }
+
+    /* 移动当前正在掉落的材料。 count 为移动几格，负数则是左移。 */
+    function _moveCurrStuff (count) {
+        var _this = this;
+        var targetOffsetX = _this.stuffOffsetCol + count;
+        if (_this.atoms && _this.stuff && _this.atomsed && _this.status === GAME_STATUS.PLAYING) {
+
+            for (var i = 0; i < _this.stuff.length; i++) {
+                for (var j = 0; j < _this.stuff[i].length; j++) {
+                    if (_this.stuff[i][j] !== 1) {
+                        continue;
+                    }
+                    if (targetOffsetX + j < 0) {
+                        /* 传入的目标位数会导致移动到屏幕左边的外面。则强制让其在屏幕内。 */
+                        targetOffsetX = -j;
+                    } else if (targetOffsetX + j > _this.atomsed[0].length - 1) {
+                        /* 传入的目标位数会导致移动到屏幕右边的外面。则强制让其在屏幕内。 */
+                        targetOffsetX = _this.atomsed[0].length - j - 1;
+                    }
+
+                    /* 材料还没完全下降到屏幕内 */
+                    if (_this.stuffOffsetRow + i < 0) continue;
+
+                    /* 判断新位置上是否有材料了，有就不能进行移动 */
+                    if (_this.atomsed[_this.stuffOffsetRow + i][targetOffsetX + j] === 1) {
+                        return;
+                    }
+
+                }
+            }
+
+            // _this.atoms = _this.launch.screen.makeNewArr(function (r, c) {return _this.atomsed[r][c];});
+            _this.stuffOffsetCol = targetOffsetX;
+            _this.atoms = WzwScreen.mergeArr2(_this.stuff, _this.atomsed, _this.stuffOffsetRow, _this.stuffOffsetCol,
+                function (tarRowIndex, tarColIndex, rowI, colI) {
+                    if (_this.stuff[rowI][colI] === 1) {
+                        return _this.stuff[rowI][colI];
+                    } else {
+                        return _this.atomsed[tarRowIndex][tarColIndex];
+                    }
+                });
+            //_this.stuffUsed = merge.call(_this, _this.atoms, _this.stuff, _this.stuffOffsetRow, _this.stuffOffsetCol);
+            // _this.atoms  _addStuffToGameAtoms(targetOffsetX, stuffOffsetY, currStuff);
+        }
     }
 
     // 获取一个随机下落的材料
@@ -420,6 +558,57 @@
             [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1]],
             [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0], [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1]],
         ];
+    }
+
+    /**
+     * 二维数组拷贝
+     * */
+    function arrCopy(src) {
+        var temp = [];
+        for (var i = 0; i < src.length; i++) {
+            temp[i] = [];
+            for (var j = 0; j < src[j].length; j++) {
+                temp[i][j] = src[i][j];
+            }
+        }
+        return temp;
+    }
+
+    // 判断此元素下降一格后是否触底,
+    function _isGrounded(stuffOffsetX, mStuffOffsetY, currStuff, atomsed) {
+
+        var grounded = false;
+
+
+        /* 判断此元素下降一格后是否触底 */
+        w:for (var i = currStuff.length - 1; i >= 0; i--) {
+            for (var j = currStuff[i].length - 1; j >= 0; j--) {
+                if (currStuff[i][j] !== 1) continue;
+
+                var c_stuffOffsetY = mStuffOffsetY + i;
+                if (c_stuffOffsetY < 0) continue;
+
+                var c_stuffOffsetX = stuffOffsetX + j;
+                if (c_stuffOffsetX < 0) continue;
+
+                /* 素材达到最低边， 或素材下一个位置有已确认的素材，则认为到底了。 */
+                if (c_stuffOffsetY === atomsed.length - 1 || atomsed[c_stuffOffsetY + 1][c_stuffOffsetX] === 1) {
+                    grounded = true;
+                }
+
+                /* 素材本身出现的位置都已经是頂部了，这绝逼是玩家玩到顶了。 */
+                if (c_stuffOffsetY === 0 && grounded) {
+                    /* 游戏结束 */
+                    throw new Error("gameover");
+                }
+
+                if (grounded) {
+                    break w;
+                }
+            }
+        }
+
+        return grounded;
     }
 
     window.Tetris = Tetris;

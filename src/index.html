@@ -107,6 +107,24 @@
     function press(key) {
         launch.pressKey(key);
     }
+
+    var keyMap = {
+        "w": function () {launch.pressKey("up")    },
+        "a": function () {launch.pressKey("left")  },
+        "s": function () {launch.pressKey("down")  },
+        "d": function () {launch.pressKey("right") },
+        " ": function () {launch.pressKey("rotate")},
+        "z": function () {launch.pressKey("start") },
+        "x": function () {launch.pressKey("voice") },
+        "c": function () {launch.pressKey("onoff") },
+        "v": function () {launch.pressKey("reset") },
+    }
+
+    // 监听键盘。
+    window.onkeypress = function (event) {
+        var f = keyMap[String(event.key).toLowerCase()];
+        f && f();
+    }
 </script>
 </body>
 </html>

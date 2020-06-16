@@ -109,8 +109,10 @@
         var _this = this;
         _this.booting = true;
         _this.booted = false;
+        _this.bootingHalf = false;
         _this.screen.playAnim(WzwScreen.ANIM.CIRCLE, function (animName, index) {
             if (index === 0) {
+                _this.bootingHalf = true;
                 // 此时动画跑满屏了。
                 if(_this.currentGame) {
                     _this.currentGame.onDestroy && _this.currentGame.onDestroy();
@@ -118,6 +120,7 @@
                 _this.currentGame = null; // 清除当前正在玩的游戏。
             } else if (index === 1) {
                 _this.booting = false;
+                _this.bootingHalf = false;
                 _this.booted = true;
             }
         });
@@ -180,7 +183,7 @@
     function logicUpdate () {
 
         // 还没开机，什么都不做，直接返回。
-        if (!this.booting && !this.booted) {
+        if (this.booting && !this.bootingHalf) {
             return;
         }
 
