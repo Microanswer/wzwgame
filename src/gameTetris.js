@@ -166,6 +166,8 @@
     /* 定义了各个等级下降的速度， 实际上数字用于settimeout时间间隔 */
     var LEVELS = [800, 700, 600, 550, 500, 450, 400, 350, 300, 250, 200, 150, 130, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 5];
 
+    /* 急速模式的时间间隔。 */
+    var TURBO_TIME_SPACE = 3;
     /* 成绩对应等级 */
     var SCORE_LEVELS = {
         "50":  1,
@@ -232,6 +234,9 @@
         // 当前等级
         this.level = 0;
 
+        this.succAniming = false;
+        this.score = 0;
+
         this.stuffOffsetRow = STUFF_OFFSET_ROW;
         this.stuffOffsetCol = STUFF_OFFSET_COL;
 
@@ -239,7 +244,20 @@
 
         // 初始状态为游戏结束。
         this.status = GAME_STATUS.OVER;
+
+        this.turbo = false;
+
+        this.launch.screen.setLevel(this.level);
+        this.launch.screen.setScore(this.score);
     };
+
+    Tetris.prototype.turboModeON = function () {
+        this.turbo = true;
+    }
+
+    Tetris.prototype.turboModeOFF = function () {
+        this.turbo = false;
+    }
 
     // 游戏启动时调用此方法
     Tetris.prototype.onLaunch = function () {
@@ -257,11 +275,10 @@
 
         // 根据当前游戏等级来更新数据。
         var now = Date.now();
-        if ((now - _this.gameLastTime) >= LEVELS[_this.level]) {
-            _this.launch.screen.setLevel(_this.level);
-            // _this.atoms = _this.launch.screen.makeNewArr(function (r, c) {
-            //     return _this.atomsed[r][c];
-            // });
+        if (
+            (now - _this.gameLastTime) >= (_this.turbo ? TURBO_TIME_SPACE : LEVELS[_this.level]) &&
+            (!_this.succAniming) // 正在进行行消减动画时不下落。
+        ) {
 
             if (_this.status === GAME_STATUS.PLAYING) {
 
@@ -284,7 +301,7 @@
                     }
 
                     if (isNewCurrStuf) {
-                        // turboModeOFF(); /*新材料掉下来时关闭急速模式*/
+                        _this.turboModeOFF(); /*新材料掉下来时关闭急速模式*/
                     }
 
 
@@ -311,6 +328,8 @@
                         _this.stuff = undefined;
                         _this.stuffOffsetRow = STUFF_OFFSET_ROW;
                         _this.stuffOffsetCol = STUFF_OFFSET_COL;
+                        // 检查行消减
+                        checkSuccessLine.call(_this);
                     }
 
                 } catch (e) {
@@ -359,7 +378,7 @@
     }
 
     // 此方法在按下对应按钮时会执行。
-    Tetris.prototype.onKeypress = function (key) {
+    Tetris.prototype.onKeyup = function (key) {
         var _this = this;
         // 按下了复位按钮，就让游戏暂停。使得界面不动。
         if ("reset" === key || "start" === key) {
@@ -374,6 +393,18 @@
         } else if ("rotate" === key || "up" === key) {
             if (_this.status === GAME_STATUS.PAUSE) return;
             rotateStuff.call(_this);
+        } else if ("down" === key) {
+            if (_this.status === GAME_STATUS.PAUSE) return;
+            _this.turboModeOFF();
+        }
+    }
+
+    // 某个按键按下时调用。
+    Tetris.prototype.onKeyDown = function(key) {
+        var _this = this;
+        if ("down" === key) {
+            if (_this.status === GAME_STATUS.PAUSE) return;
+            _this.turboModeON();
         }
     }
 
@@ -392,6 +423,108 @@
                 _this.onDestroy();
             }
         });
+    }
+
+    function onScoreChange(score) {
+        this.launch.screen.setScore(score);
+    }
+
+    function onLevelChange(level) {
+        this.launch.screen.setLevel(level);
+    }
+
+    /* 检查堆砌成功的行，并进行消除。 */
+    function checkSuccessLine() {
+        var _this = this;
+
+        var successLine = [];
+
+        for (var i = 0; i < _this.atomsed.length; i++) {
+
+            var isSuccess = true;
+            for (var j = 0; j < _this.atomsed[i].length; j++) {
+                if (_this.atomsed[i][j] !== 1){
+                    isSuccess = false;
+                    break;
+                }
+            }
+
+
+            /* 成功一行就+1分*/
+            if (isSuccess) {
+                _this.succAniming = true;
+                _this.score += 1;
+                successLine.push(i);
+            }
+        }
+
+        if (successLine.length > 0) {
+
+            /* 如果一次消了4行，再加1分 */
+            if (successLine.length >= 4) {
+                _this.score += 1;
+            }
+            onScoreChange.call(_this, _this.score);
+
+            /*提升等级*/
+            var newLevel = SCORE_LEVELS[String(_this.score)];
+            if (newLevel > _this.level) {
+                _this.level = newLevel;
+                onLevelChange.call(_this, _this.level);
+            }
+
+
+            // 执行行消减动画。
+            var ended = false;
+            var onAnimEnd = function () {
+                if (ended) return;
+                ended = true;
+
+                /*动画完成后重整数组，将消除的行上面的依次向下整理*/
+                while (successLine.length > 0) {
+                    var rowm = successLine.shift();
+                    for (var row = rowm; row >= 1; row--) {
+                        var lastRow = row - 1;
+                        _this.atomsed[row] = [].concat(_this.atomsed[lastRow]);
+                        if (lastRow === 0) {
+                            _this.atomsed[lastRow] = [];
+                            WzwScreen.each(_this.launch.screen.option.atomColCount, function (num, numIndex) {
+                                _this.atomsed[lastRow][numIndex] = 0;
+                            });
+
+                        }
+                    }
+                }
+                _this.atoms = arrCopy(_this.atomsed);
+                _this.succAniming = false;
+            };
+
+            /* 在数组里将消除的行全部置为0，通过此操作使得界面上的行有个从左到右消减的动画 */
+            WzwScreen.scroll(0, _this.atoms[0].length - 1, {
+                goo: function (process) {
+                    var l = _this.atoms[0].length;
+                    /*scroll方法有bug吗，process应该在to范围内啊，但是出现了超过to的现象，所以这里判断一下*/
+                    process = process >= l ? l : process;
+                    for (var j = 0; j < process; j++) {
+                        WzwScreen.each(successLine, function (index, value) {
+                            _this.atoms[index][j] = 0;
+                        });
+                    }
+                },
+                end: function (end) {
+                    for (var j = 0; j < _this.atoms[0].length; j++) {
+                        WzwScreen.each(successLine, function (index, value) {
+                            _this.atoms[index][j] = 0;
+                        });
+                    }
+
+                    /* 将消除的行剩下的重整 */
+                    setTimeout(function () {
+                        onAnimEnd();
+                    }, 50);
+                }
+            }, 200);
+        }
     }
 
     /* 旋转材料。 此方法只有在游戏中有效，可以将正在下落的材料进行顺时针90度旋转。 */

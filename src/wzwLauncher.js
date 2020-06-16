@@ -126,24 +126,39 @@
         });
     }
 
-    WzwLauncher.prototype.pressUp     = function () {press.call(this, "up");    }  // 按下游戏机"上"按钮
-    WzwLauncher.prototype.pressRight  = function () {press.call(this, "right"); }  // 按下游戏机"右"按钮
-    WzwLauncher.prototype.pressDown   = function () {press.call(this, "down");  }  // 按下游戏机"下"按钮
-    WzwLauncher.prototype.pressLeft   = function () {press.call(this, "left");  }  // 按下游戏机"左"按钮
-    WzwLauncher.prototype.pressRotate = function () {press.call(this, "rotate");}  // 按下游戏机"旋转"按钮，就是最大的那个按键。
-    WzwLauncher.prototype.pressStart  = function () {press.call(this, "start"); }  // 按下游戏机"开始"按钮
-    WzwLauncher.prototype.pressVoice  = function () {press.call(this, "voice"); }  // 按下游戏机"声音"按钮
-    WzwLauncher.prototype.pressOnOff  = function () {press.call(this, "onoff"); }  // 按下游戏机"开关"按钮
-    WzwLauncher.prototype.pressReset  = function () {press.call(this, "reset"); }  // 按下游戏机"复位"按钮
-    WzwLauncher.prototype.pressKey    = function (key) {
-        press.call(this, key);
+    // up       // 按下游戏机"上"按钮
+    // right    // 按下游戏机"右"按钮
+    // down     // 按下游戏机"下"按钮
+    // left     // 按下游戏机"左"按钮
+    // rotate   // 按下游戏机"旋转"按钮，就是最大的那个按键。
+    // start    // 按下游戏机"开始"按钮
+    // voice    // 按下游戏机"声音"按钮
+    // onoff    // 按下游戏机"开关"按钮
+    // reset    // 按下游戏机"复位"按钮
+    WzwLauncher.prototype.onKeyUp     = function (key) {onKeyUp.call(this, key);}
+    WzwLauncher.prototype.onKeyDown = function (key) {onKeyDown.call(this, key);}
+
+    function onKeyDown(key) {
+
+        // 还没开机
+        if (!this.booted) {
+            return;
+        }
+
+        // 没有注册任何游戏
+        if (!this.games || this.games.length < 1) {
+            return;
+        }
+        if (this.currentGame) {
+            this.currentGame.onKeyDown && this.currentGame.onKeyDown(key);
+        }
     }
 
     /**
      * 模拟按下某个按钮
      * @param key
      */
-    function press(key) {
+    function onKeyUp(key) {
         // 还没开机
         if (!this.booted) {
             return;
@@ -156,7 +171,7 @@
 
         // 当前在运行游戏。
         if (this.currentGame) {
-            this.currentGame.onKeypress && this.currentGame.onKeypress(key);
+            this.currentGame.onKeyup && this.currentGame.onKeyup(key);
         } else {
             if ("rotate" === key) {
                 // 没开始游戏时，就使用此按钮进行多个游戏间的切换。

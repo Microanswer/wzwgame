@@ -46,28 +46,18 @@
 <table>
     <tr>
         <td><button class="btn hide">　</button></td>
-        <td><button class="btn" onclick="press('up')">上</button></td>
+        <td><button class="btn" onmouseup="onKeyUp('up')" onmousedown="onKeyDown('up')">上</button></td>
         <td><button class="btn hide">　</button></td>
         <td><button class="btn hide">　</button></td>
         <td><button class="btn hide">　</button></td>
         <td><button class="btn hide">　</button></td>
         <td><button class="btn hide">　</button></td>
-        <td rowspan="3"><button class="big btn" onclick="press('rotate')">旋转</button></td>
+        <td rowspan="3"><button class="big btn" onmouseup="onKeyUp('rotate')" onmousedown="onKeyDown('rotate')">旋转</button></td>
     </tr>
     <tr>
-        <td><button class="btn" onclick="press('left')">左</button></td>
+        <td><button class="btn" onmouseup="onKeyUp('left')" onmousedown="onKeyDown('left')">左</button></td>
         <td><button class="btn hide">　</button></td>
-        <td><button class="btn" onclick="press('right')">右</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-    </tr>
-    <tr>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn" onclick="press('down')">下</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
+        <td><button class="btn" onmouseup="onKeyUp('right')" onmousedown="onKeyDown('right')">右</button></td>
         <td><button class="btn hide">　</button></td>
         <td><button class="btn hide">　</button></td>
         <td><button class="btn hide">　</button></td>
@@ -75,55 +65,69 @@
     </tr>
     <tr>
         <td><button class="btn hide">　</button></td>
+        <td><button class="btn" onmouseup="onKeyUp('down')" onmousedown="onKeyDown('down')">下</button></td>
         <td><button class="btn hide">　</button></td>
         <td><button class="btn hide">　</button></td>
-        <td><button class="btn small" onclick="press('start')"></button><div class="text-center small">开始</div></td>
-        <td><button class="btn small" onclick="press('voice')"></button><div class="text-center small">声音</div></td>
-        <td><button class="btn small" onclick="press('onoff')"></button><div class="text-center small">开关</div></td>
-        <td><button class="btn small" onclick="press('reset')"></button><div class="text-center small">复位</div></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+    </tr>
+    <tr>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn hide">　</button></td>
+        <td><button class="btn small" onmouseup="onKeyUp('start')" onmousedown="onKeyDown('start')"></button><div class="text-center small">开始</div></td>
+        <td><button class="btn small" onmouseup="onKeyUp('voice')" onmousedown="onKeyDown('voice')"></button><div class="text-center small">声音</div></td>
+        <td><button class="btn small" onmouseup="onKeyUp('onoff')" onmousedown="onKeyDown('onoff')"></button><div class="text-center small">开关</div></td>
+        <td><button class="btn small" onmouseup="onKeyUp('reset')" onmousedown="onKeyDown('reset')"></button><div class="text-center small">复位</div></td>
         <td><button class="btn hide">　</button></td>
     </tr>
 </table>
-<button onclick="start()">开始游戏</button>
-<button onclick="prev()">上一个游戏</button>
-<button onclick="next()">下一个游戏</button>
 <script>
     var launch = new WzwLauncher("#screen");
     launch.regGame("A", new Tetris());
     launch.regGame("B", new Tank());
 
-    function start() {
-        launch.start();
+
+    function onKeyUp(key) {launch.onKeyUp(key);}
+    function onKeyDown(key) {launch.onKeyDown(key);}
+
+    var keyUpMap = {
+        "w": function () {launch.onKeyUp("up")    },
+        "a": function () {launch.onKeyUp("left")  },
+        "s": function () {launch.onKeyUp("down")  },
+        "d": function () {launch.onKeyUp("right") },
+        " ": function () {launch.onKeyUp("rotate")},
+        "z": function () {launch.onKeyUp("start") },
+        "x": function () {launch.onKeyUp("voice") },
+        "c": function () {launch.onKeyUp("onoff") },
+        "v": function () {launch.onKeyUp("reset") },
     }
 
-    function prev() {
-        launch.prevGame();
-    }
-
-    function next() {
-        launch.nextGame();
-    }
-
-    function press(key) {
-        launch.pressKey(key);
-    }
-
-    var keyMap = {
-        "w": function () {launch.pressKey("up")    },
-        "a": function () {launch.pressKey("left")  },
-        "s": function () {launch.pressKey("down")  },
-        "d": function () {launch.pressKey("right") },
-        " ": function () {launch.pressKey("rotate")},
-        "z": function () {launch.pressKey("start") },
-        "x": function () {launch.pressKey("voice") },
-        "c": function () {launch.pressKey("onoff") },
-        "v": function () {launch.pressKey("reset") },
+    var keyDownMap = {
+        "w": function () {launch.onKeyDown("up")    },
+        "a": function () {launch.onKeyDown("left")  },
+        "s": function () {launch.onKeyDown("down")  },
+        "d": function () {launch.onKeyDown("right") },
+        " ": function () {launch.onKeyDown("rotate")},
+        "z": function () {launch.onKeyDown("start") },
+        "x": function () {launch.onKeyDown("voice") },
+        "c": function () {launch.onKeyDown("onoff") },
+        "v": function () {launch.onKeyDown("reset") },
     }
 
     // 监听键盘。
-    window.onkeypress = function (event) {
-        var f = keyMap[String(event.key).toLowerCase()];
+    window.onkeyup = function (event) {
+        var f = keyUpMap[String(event.key).toLowerCase()];
         f && f();
+        event.stopPropagation();
+    }
+
+    window.onkeydown = function (event) {
+        var f = keyDownMap[String(event.key).toLowerCase()];
+        f && f();
+        event.stopPropagation();
     }
 </script>
 </body>
