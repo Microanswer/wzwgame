@@ -1,0 +1,141 @@
+html,body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #019cd6;
+}
+tr td {
+    text-align: center;
+}
+.btn {
+    outline: none;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #decb02, #c1b002);
+    transition-duration: 30ms;
+
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display-role: button;
+
+
+    box-shadow:  4px 4px 8px #555555,
+    -4px -4px 8px #7ed2d2;
+}
+.btn.small {
+    width: 18px;
+    height: 18px;
+    margin: 0 6px;
+
+    box-shadow:  3px 3px 6px #555555,
+    -3px -3px 6px #7ed2d2;
+}
+
+.btn.hide {
+    opacity: 0;
+    display: none;
+}
+.btn.big {
+    width: 70px;
+    height: 70px;
+    box-shadow:  8px 8px 20px #555555,
+    -8px -8px 20px #7ed2d2;
+}
+.btn.active, .btn:active {
+    background: linear-gradient(145deg, #a69700, #c5b400);
+    box-shadow:  2px 2px 4px #555555,
+    -2px -2px 4px #7ed2d2;
+}
+.text-center {
+    text-align: center;
+}
+.text-center.small {
+    font-size: 12px;
+}
+
+.pt-50 {
+    padding-top: 50px!important;
+}
+
+.pb-50 {
+    padding-bottom: 50px!important;
+}
+
+.flex-page {
+    display: flex;
+    display: -webkit-flex;
+
+    justify-content: center;
+}
+
+
+.game {
+    background: #019CD6;
+    width: 430px;
+
+    border-radius: 45px;
+
+    box-shadow:
+            30px 40px 40px rgba(0, 0, 0, 0.8),
+            -30px -40px 40px rgba(232, 232, 232, 0.55);
+}
+
+.game .game-head {
+    text-align: center;
+    padding: 70px 0;
+}
+.game .game-head .leftdoc, .game .game-head .rightdoc {
+    display: inline-block;
+    margin: 0 15px;
+}
+.game .game-head .leftdoc img, .game .game-head .rightdoc img{
+    height: 320px;
+}
+
+.game .game-head #screen {
+    border: 20px inset;
+    border-color: #0a90bf #4dbde3 #59c6e8 #019CD6;
+    width: 196px;
+    height: 256px;
+    overflow: hidden;
+}
+.game .game-head #screen canvas {
+    border: 2px solid black;
+}
+
+.game .game-head .centerdoc {
+    position: relative;
+    display: inline-block;
+    border: 4px solid #280000;
+    padding: 20px 20px 40px 20px;
+}
+.game .game-head .centerdoc .logo{
+    position: absolute;
+    font-size: 20px;
+    line-height: 20px;
+    text-align: center;
+    font-weight: bold;
+    bottom: -10px;
+    left: 0;
+    right: 0;
+}
+
+.game .game-head .centerdoc .logo .text{
+    background: #019CD6;
+    display: inline-block;
+    padding: 0 20px;
+}
+.game .game-head .centerdoc .logo .text a {
+    color: black;
+    text-decoration: none;
+}
+
+.game .game-body {
+    padding:  0 0 50px 0;
+    text-align: center;
+}
+
+.game .game-body table {
+    margin: 0 auto;
+}

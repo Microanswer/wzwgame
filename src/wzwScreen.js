@@ -1,18 +1,18 @@
 ;(function (window) {
 
     var DEFAULT_OPTION = {
-        width:         330,           // 游戏屏幕宽度
-        height:        430,           // 游戏屏幕高度
+        width:         190,           // 游戏屏幕宽度
+        height:        250,           // 游戏屏幕高度
         atomRowCount:  21,            // 点阵行数
         atomColCount:  11,            // 点阵列数
-        atomBorder:    2,             // 点阵边框大小
-        atomInset:     3.5,           // 点阵内空白大小
-        atomSpace:     4,             // 点阵间距
-        splitPosition: 0.68,          // 左右分隔位置，取值范围:0~1
+        atomBorder:    1.5,             // 点阵边框大小
+        atomInset:     2,             // 点阵内空白大小
+        atomSpace:     3,             // 点阵间距
+        splitPosition: 0.7,           // 左右分隔位置，取值范围:0~1
         splitSize:     1,             // 分割线大小
-        fontSize:      16,            // 文字大小
-        fontHeight:    20,            // 文字行高
-        background:    "#A6AC9F",     // 背景色
+        fontSize:      13,            // 文字大小
+        fontHeight:    15,            // 文字行高
+        background:    "#9facaa",     // 背景色
         color1:        "#000000",     // 浓颜色
         color2:        "#898989",     // 浅颜色
     };
@@ -131,6 +131,9 @@
     WzwScreen.prototype.setPause = function (pause) {
         this.paused = pause;
     }
+    WzwScreen.prototype.setBest = function (best) {
+        this.best = best;
+    }
 
 
     // 初始化数据 - 重置游戏时也可以调用此方法。
@@ -149,7 +152,7 @@
         this.score  = 0;
         this.paused = false;
         this.level  = 0;
-        // this.beast = 0;
+        this.best   = 0;
     }
 
     // 初始化屏幕
@@ -157,6 +160,8 @@
         var canvasDom = document.createElement("canvas");
         canvasDom.width            = canvasDom.style.width  = this.option.width;
         canvasDom.height           = canvasDom.style.height = this.option.height;
+        canvasDom.style.margin     = "0";
+        canvasDom.style.padding    = "0";
         canvasDom.style.background = this.option.background;
         this.dom.appendChild(canvasDom);
 
@@ -299,16 +304,17 @@
         var fontOffsetX = _this.drawParam.splitPosition + 5;
 
         ctx.strokeStyle = _this.option.color1;
+        ctx.fillStyle   = _this.option.color1;
 
         ctx.font = _this.drawParam.fontItalic;
         ctx.fillText("Score", fontOffsetX, fontOffsetY);
         ctx.font = _this.drawParam.fontBold;
-        ctx.fillText(_this.score, fontOffsetX, fontOffsetY += this.option.fontHeight);
+        ctx.fillText(_this.score, fontOffsetX, fontOffsetY += _this.option.fontHeight);
 
         ctx.font = _this.drawParam.fontItalic;
-        ctx.fillText("Level", fontOffsetX, fontOffsetY += this.option.fontHeight);
+        ctx.fillText("Level", fontOffsetX, fontOffsetY += _this.option.fontHeight);
         ctx.font = _this.drawParam.fontBold;
-        ctx.fillText(_this.level, fontOffsetX, fontOffsetY += this.option.fontHeight);
+        ctx.fillText(_this.level, fontOffsetX, fontOffsetY += _this.option.fontHeight);
 
         // 绘制预备点阵
         var offsetRow = fontOffsetY + 5;
@@ -323,13 +329,22 @@
             });
             offsetRow += _this.drawParam.atomHeight;
         });
-
-        // 绘制暂停标识。
-        ctx.fillStyle = this.paused ? this.option.color1 : this.option.color2;
-
         fontOffsetY = offsetRow + 5;
+
+        ctx.strokeStyle = ctx.fillStyle = _this.option.color1;
+
+        // 绘制最佳成绩
         ctx.font = _this.drawParam.fontItalic;
-        ctx.fillText("PAUSED", fontOffsetX, fontOffsetY += this.option.fontHeight);
+        ctx.fillText("Best", fontOffsetX, fontOffsetY += _this.option.fontHeight);
+        ctx.font = _this.drawParam.fontBold;
+        ctx.fillText(_this.best, fontOffsetX, fontOffsetY += _this.option.fontHeight);
+
+
+        fontOffsetY += 5;
+        // 绘制暂停标识。
+        ctx.fillStyle = _this.paused ? _this.option.color1 : _this.option.color2;
+        ctx.font = _this.drawParam.fontItalic;
+        ctx.fillText("PAUSE", fontOffsetX, fontOffsetY += _this.option.fontHeight);
 
 
         ctx.font        = of;

@@ -3,118 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <title>王中王游戏机</title>
-    <style>
-        tr td {
-            text-align: center;
-        }
-        .btn {
-            border-radius: 50%;
-            border: 1px solid gray;
-
-            width: 35px;
-            height: 35px;
-            cursor: pointer;
-            display-role: button;
-        }
-        .btn.small {
-            width: 18px;
-            height: 18px;
-        }
-
-        .btn.hide {
-            opacity: 0;
-        }
-        .btn.big {
-            width: 60px;
-            height: 60px;
-        }
-        .text-center {
-            text-align: center;
-        }
-        .text-center.small {
-            font-size: 12px;
-        }
-    </style>
+    <link rel="stylesheet" href="index.css">
+    <script src="Clicker.js"></script>
     <script src="wzwScreen.js"></script>
     <script src="wzwLauncher.js"></script>
     <script src="gameTetris.js"></script>
     <script src="gameTank.js"></script>
 </head>
 <body>
-<div id="screen"></div>
-<br>
-<table>
-    <tr>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn" onmouseup="onKeyUp('up')" onmousedown="onKeyDown('up')">上</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td rowspan="3"><button class="big btn" onmouseup="onKeyUp('rotate')" onmousedown="onKeyDown('rotate')">旋转</button></td>
-    </tr>
-    <tr>
-        <td><button class="btn" onmouseup="onKeyUp('left')" onmousedown="onKeyDown('left')">左</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn" onmouseup="onKeyUp('right')" onmousedown="onKeyDown('right')">右</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-    </tr>
-    <tr>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn" onmouseup="onKeyUp('down')" onmousedown="onKeyDown('down')">下</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-    </tr>
-    <tr>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn hide">　</button></td>
-        <td><button class="btn small" onmouseup="onKeyUp('start')" onmousedown="onKeyDown('start')"></button><div class="text-center small">开始</div></td>
-        <td><button class="btn small" onmouseup="onKeyUp('voice')" onmousedown="onKeyDown('voice')"></button><div class="text-center small">声音</div></td>
-        <td><button class="btn small" onmouseup="onKeyUp('onoff')" onmousedown="onKeyDown('onoff')"></button><div class="text-center small">开关</div></td>
-        <td><button class="btn small" onmouseup="onKeyUp('reset')" onmousedown="onKeyDown('reset')"></button><div class="text-center small">复位</div></td>
-        <td><button class="btn hide">　</button></td>
-    </tr>
-</table>
+<div class="pt-50 flex-page">
+<div class="game">
+    <div class="game-head">
+        <div class="leftdoc"><img src="left.png"/></div>
+        <div class="centerdoc">
+            <div id="screen"></div>
+            <div class="logo">
+                <div class="text">
+                    <a target="_blank" href="https://www.microanswer.cn">Microanswer</a>
+                </div>
+            </div>
+        </div>
+        <div class="rightdoc"><img src="right.png"/></div>
+    </div>
+    <div class="game-body">
+        <table>
+            <tr>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn" id="up" onmouseup="onKeyUp('up')" onmousedown="onKeyDown('up')">上</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td rowspan="3">
+                    <button class="big btn" id="rotate" onmouseup="onKeyUp('rotate')" onmousedown="onKeyDown('rotate')">旋转</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button class="btn" id="left" onmouseup="onKeyUp('left')" onmousedown="onKeyDown('left')">左</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn" id="right" onmouseup="onKeyUp('right')" onmousedown="onKeyDown('right')">右</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn" id="down" onmouseup="onKeyUp('down')" onmousedown="onKeyDown('down')">下</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="8">
+                    <div style="height: 30px"></div>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn small" id="start" onmouseup="onKeyUp('start')" onmousedown="onKeyDown('start')"></button>
+                    <div class="text-center small">开始</div>
+                </td>
+                <td>
+                    <button class="btn small" id="voice" onmouseup="onKeyUp('voice')" onmousedown="onKeyDown('voice')"></button>
+                    <div class="text-center small">声音</div>
+                </td>
+                <td>
+                    <button class="btn small" id="onoff" onmouseup="onKeyUp('onoff')" onmousedown="onKeyDown('onoff')"></button>
+                    <div class="text-center small">开关</div>
+                </td>
+                <td>
+                    <button class="btn small" id="reset" onmouseup="onKeyUp('reset')" onmousedown="onKeyDown('reset')"></button>
+                    <div class="text-center small">复位</div>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+                <td>
+                    <button class="btn hide">　</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+</div>
 <script>
     var launch = new WzwLauncher("#screen");
     launch.regGame("A", new Tetris());
     launch.regGame("B", new Tank());
 
+    var clickers = {};
 
-    function onKeyUp(key) {launch.onKeyUp(key);}
-    function onKeyDown(key) {launch.onKeyDown(key);}
+    function onKeyUp(key)   {
+        launch.onKeyUp(key);
+        upKey(key);
+
+        var clicker = clickers[key];
+        if (clicker) {
+            clicker.release();
+        }
+    }
+    function onKeyDown(key) {
+        var clicker = clickers[key];
+        if (!clicker) {
+            clicker = clickers[key] = new Clicker();
+            clicker.onClick(function () {
+                launch.onKeyDown(key);
+                downKey(key);
+            });
+        }
+        clicker.push();
+    }
+
+    function upKey(key) {
+        var btn = document.querySelector("#" + key);
+        btn.className = btn.className.replace(/ active/g, "");
+    }
+    function downKey(key) {
+        var btn = document.querySelector("#" + key);
+        if (btn.className.indexOf("active") < 0) {
+            btn.className = btn.className + " active";
+        }
+    }
 
     var keyUpMap = {
-        "w": function () {launch.onKeyUp("up")    },
-        "a": function () {launch.onKeyUp("left")  },
-        "s": function () {launch.onKeyUp("down")  },
-        "d": function () {launch.onKeyUp("right") },
-        " ": function () {launch.onKeyUp("rotate")},
-        "z": function () {launch.onKeyUp("start") },
-        "x": function () {launch.onKeyUp("voice") },
-        "c": function () {launch.onKeyUp("onoff") },
-        "v": function () {launch.onKeyUp("reset") },
+        "w": function () {onKeyUp("up")    },
+        "a": function () {onKeyUp("left")  },
+        "s": function () {onKeyUp("down")  },
+        "d": function () {onKeyUp("right") },
+        " ": function () {onKeyUp("rotate")},
+        "z": function () {onKeyUp("start") },
+        "x": function () {onKeyUp("voice") },
+        "c": function () {onKeyUp("onoff") },
+        "v": function () {onKeyUp("reset") },
     }
 
     var keyDownMap = {
-        "w": function () {launch.onKeyDown("up")    },
-        "a": function () {launch.onKeyDown("left")  },
-        "s": function () {launch.onKeyDown("down")  },
-        "d": function () {launch.onKeyDown("right") },
-        " ": function () {launch.onKeyDown("rotate")},
-        "z": function () {launch.onKeyDown("start") },
-        "x": function () {launch.onKeyDown("voice") },
-        "c": function () {launch.onKeyDown("onoff") },
-        "v": function () {launch.onKeyDown("reset") },
+        "w": function () {onKeyDown("up")    },
+        "a": function () {onKeyDown("left")  },
+        "s": function () {onKeyDown("down")  },
+        "d": function () {onKeyDown("right") },
+        " ": function () {onKeyDown("rotate")},
+        "z": function () {onKeyDown("start") },
+        "x": function () {onKeyDown("voice") },
+        "c": function () {onKeyDown("onoff") },
+        "v": function () {onKeyDown("reset") },
     }
 
     // 监听键盘。
@@ -123,7 +210,6 @@
         f && f();
         event.stopPropagation();
     }
-
     window.onkeydown = function (event) {
         var f = keyDownMap[String(event.key).toLowerCase()];
         f && f();

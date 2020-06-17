@@ -204,6 +204,8 @@
     function Tetris() {
         // 初始化游戏预览。
         initPreview.call(this);
+
+        this.best = (localStorage || sessionStorage).getItem("tetrisBest") || 0;
     }
 
     // 当游戏实列被注册到launch时调用。
@@ -249,6 +251,7 @@
 
         this.launch.screen.setLevel(this.level);
         this.launch.screen.setScore(this.score);
+        this.launch.screen.setBest(this.best);
     };
 
     Tetris.prototype.turboModeON = function () {
@@ -380,8 +383,15 @@
     // 此方法在按下对应按钮时会执行。
     Tetris.prototype.onKeyup = function (key) {
         var _this = this;
-        // 按下了复位按钮，就让游戏暂停。使得界面不动。
-        if ("reset" === key || "start" === key) {
+        if ("down" === key) {
+            _this.turboModeOFF();
+        }
+    }
+
+    // 某个按键按下时调用。
+    Tetris.prototype.onKeyDown = function(key) {
+        var _this = this;
+        if ("reset" === key || "start" === key) { // 按下了复位按钮，就让游戏暂停。使得界面不动。
             _this.pause();
         } else if ("left" === key) {
             // 左移动
@@ -395,15 +405,6 @@
             rotateStuff.call(_this);
         } else if ("down" === key) {
             if (_this.status === GAME_STATUS.PAUSE) return;
-            _this.turboModeOFF();
-        }
-    }
-
-    // 某个按键按下时调用。
-    Tetris.prototype.onKeyDown = function(key) {
-        var _this = this;
-        if ("down" === key) {
-            if (_this.status === GAME_STATUS.PAUSE) return;
             _this.turboModeON();
         }
     }
@@ -411,6 +412,7 @@
     // 此方法当用户按复位时，动画执行到满屏，会调用，游戏应该清除自己的状态。
     Tetris.prototype.onDestroy = function () {
         this.reset();
+        this.launch.screen.setBest(0);
         this.launch.screen.setPause(false);
         this.launch.exitCurentGame(); // 退出当前游戏
     }
@@ -426,7 +428,16 @@
     }
 
     function onScoreChange(score) {
+        if (score > this.best) {
+            onNewBest.call(this, score);
+        }
         this.launch.screen.setScore(score);
+    }
+
+    function onNewBest(score) {
+        this.best = score;
+        (localStorage || sessionStorage).setItem("tetrisBest", score);
+        this.launch.screen.setBest(score);
     }
 
     function onLevelChange(level) {
@@ -523,7 +534,7 @@
                         onAnimEnd();
                     }, 50);
                 }
-            }, 200);
+            }, 240);
         }
     }
 
@@ -707,7 +718,7 @@
         return temp;
     }
 
-    // 判断此元素下降一格后是否触底,
+    // 判断此元素是否触底,
     function _isGrounded(stuffOffsetX, mStuffOffsetY, currStuff, atomsed) {
 
         var grounded = false;

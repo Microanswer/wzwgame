@@ -107,6 +107,7 @@
     WzwLauncher.prototype.reboot = function () {
         // 播放开机动画
         var _this = this;
+        _this.offed = false;
         _this.booting = true;
         _this.booted = false;
         _this.bootingHalf = false;
@@ -126,6 +127,21 @@
         });
     }
 
+    WzwLauncher.prototype.turnOff = function() {
+        var _this    = this;
+        this.booted  = false;
+        this.booting = true;
+        this.screen.playAnim(WzwScreen.ANIM.T2B, function (animName, index) {
+            if (index === 0) {
+                _this.offed = true;
+            } else if (index === 1) {
+                _this.booting = false;
+                _this.current = 0;
+                _this.currentGame = null;
+            }
+        });
+    }
+
     // up       // 按下游戏机"上"按钮
     // right    // 按下游戏机"右"按钮
     // down     // 按下游戏机"下"按钮
@@ -141,7 +157,7 @@
     function onKeyDown(key) {
 
         // 还没开机
-        if (!this.booted) {
+        if (!this.booted || this.offed) {
             return;
         }
 
@@ -160,7 +176,17 @@
      */
     function onKeyUp(key) {
         // 还没开机
-        if (!this.booted) {
+        if (!this.booted || this.offed) {
+            if ("onoff" === key) {
+                // 按了开机按钮，进行开机。
+                this.reboot();
+            }
+            return;
+        }
+
+        // 关机
+        if ("onoff" === key) {
+            this.turnOff();
             return;
         }
 
@@ -196,6 +222,16 @@
 
 
     function logicUpdate () {
+
+        // 已关机。
+        if (this.offed) {
+            this.screen.updateAtomArr(null);
+            this.screen.updateStatusAtoms(null);
+            this.screen.setScore(0);
+            this.screen.setLevel(0);
+            this.screen.setBest(0);
+            return;
+        }
 
         // 还没开机，什么都不做，直接返回。
         if (this.booting && !this.bootingHalf) {
