@@ -164,9 +164,16 @@
         canvasDom.style.padding    = "0";
         canvasDom.style.background = this.option.background;
         this.dom.appendChild(canvasDom);
-
         this.canvasDom = canvasDom;
-        this.canvas    = this.canvasDom.getContext("2d");
+
+        var innerCanvasDom = document.createElement("canvas");
+        innerCanvasDom.width            = innerCanvasDom.style.width  = this.option.width;
+        innerCanvasDom.height           = innerCanvasDom.style.height = this.option.height;
+        innerCanvasDom.style.background = this.option.background;
+        this.innerCanvasDom = innerCanvasDom;
+
+        this.canvas     = this.innerCanvasDom.getContext("2d");
+        this.viewCanvas = this.canvasDom.getContext("2d");
     }
 
     // 初始化绘制参数。
@@ -197,6 +204,7 @@
         (function loop () {
             logicUpdate.call(_this);
             onRender.call(_this, ctx);
+            applyRender.call(_this, ctx);
             if (window.requestAnimationFrame) {
                 window.requestAnimationFrame(loop);
             } else if (window.webkitRequestAnimationFrame) {
@@ -351,6 +359,10 @@
         ctx.strokeStyle = oss;
         ctx.fillStyle   = ofs;
         ctx.lineWidth   = olw;
+    }
+
+    function applyRender(ctx) {
+        this.viewCanvas.drawImage(this.innerCanvasDom, 0, 0);
     }
 
     // 执行动画组,这是一个递归方法
