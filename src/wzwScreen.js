@@ -17,6 +17,16 @@
         color2:        "#898989",     // 浅颜色
     };
 
+    var CONSTANT = {
+        STRINGS: {
+            score: "Score",
+            best:  "Best",
+            level: "Level",
+            pause: "PAUSE",
+            fps:   "Fps"
+        }
+    }
+
     /**
      * 游戏显示屏类。所以游戏都通过使用这个显示器类来实现游戏内容。
      */
@@ -149,6 +159,7 @@
         // 初始化状态数据。
         _this.statusAtoms = undefined;
 
+        this.fps    = 60;
         this.score  = 0;
         this.paused = false;
         this.level  = 0;
@@ -201,7 +212,14 @@
     function render () {
         var _this = this;
         var ctx = _this.canvas;
+        var _fps = 0;
+
+        setInterval(function () {
+            _this.fps = _fps;
+            _fps = 0;
+        }, 1000);
         (function loop () {
+            _fps += 1;
             logicUpdate.call(_this);
             onRender.call(_this, ctx);
             applyRender.call(_this, ctx);
@@ -315,12 +333,12 @@
         ctx.fillStyle   = _this.option.color1;
 
         ctx.font = _this.drawParam.fontItalic;
-        ctx.fillText("Score", fontOffsetX, fontOffsetY);
+        ctx.fillText(CONSTANT.STRINGS.score, fontOffsetX, fontOffsetY);
         ctx.font = _this.drawParam.fontBold;
         ctx.fillText(_this.score, fontOffsetX, fontOffsetY += _this.option.fontHeight);
 
         ctx.font = _this.drawParam.fontItalic;
-        ctx.fillText("Level", fontOffsetX, fontOffsetY += _this.option.fontHeight);
+        ctx.fillText(CONSTANT.STRINGS.level, fontOffsetX, fontOffsetY += _this.option.fontHeight);
         ctx.font = _this.drawParam.fontBold;
         ctx.fillText(_this.level, fontOffsetX, fontOffsetY += _this.option.fontHeight);
 
@@ -343,7 +361,7 @@
 
         // 绘制最佳成绩
         ctx.font = _this.drawParam.fontItalic;
-        ctx.fillText("Best", fontOffsetX, fontOffsetY += _this.option.fontHeight);
+        ctx.fillText(CONSTANT.STRINGS.best, fontOffsetX, fontOffsetY += _this.option.fontHeight);
         ctx.font = _this.drawParam.fontBold;
         ctx.fillText(_this.best, fontOffsetX, fontOffsetY += _this.option.fontHeight);
 
@@ -352,8 +370,15 @@
         // 绘制暂停标识。
         ctx.fillStyle = _this.paused ? _this.option.color1 : _this.option.color2;
         ctx.font = _this.drawParam.fontItalic;
-        ctx.fillText("PAUSE", fontOffsetX, fontOffsetY += _this.option.fontHeight);
+        ctx.fillText(CONSTANT.STRINGS.pause, fontOffsetX, fontOffsetY += _this.option.fontHeight);
 
+
+        // 绘制fps
+        ctx.strokeStyle = ctx.fillStyle = _this.option.color1;
+        ctx.font = _this.drawParam.fontItalic;
+        ctx.fillText(CONSTANT.STRINGS.fps, fontOffsetX, _this.option.height - _this.option.fontHeight - 2);
+        ctx.font = _this.drawParam.fontBold;
+        ctx.fillText(_this.fps, fontOffsetX, _this.option.height - 2);
 
         ctx.font        = of;
         ctx.strokeStyle = oss;

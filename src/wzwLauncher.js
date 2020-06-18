@@ -242,6 +242,7 @@
         if (!this.games || this.games.length <= 0) {
             this.atoms = getEmptyAtoms.call(this);
             this.screen.updateAtomArr(this.atoms);
+            this.screen.updateStatusAtoms(null);
             return;
         }
 
