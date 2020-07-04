@@ -152,27 +152,18 @@
      * 初始化坦克的点阵。这个点阵会根据坦克的方向进行初始化/
      */
     Tanker.prototype.initAtoms = function (){
-        this.atoms = [];
         switch (this.direction) {
             case DIRECTION.UP:
-                this.atoms.push([0,1,0]);
-                this.atoms.push([1,1,1]);
-                this.atoms.push([1,0,1]);
+                this.atoms = DIRECTION.UP_ARR();
                 break;
             case DIRECTION.RIGHT:
-                this.atoms.push([1,1,0]);
-                this.atoms.push([0,1,1]);
-                this.atoms.push([1,1,0]);
+                this.atoms = DIRECTION.RIGHT_ARR();
                 break;
             case DIRECTION.BOTTOM:
-                this.atoms.push([1,0,1]);
-                this.atoms.push([1,1,1]);
-                this.atoms.push([0,1,0]);
+                this.atoms = DIRECTION.BOTTOM_ARR();
                 break;
             case DIRECTION.LEFT:
-                this.atoms.push([0,1,1]);
-                this.atoms.push([1,1,0]);
-                this.atoms.push([0,1,1]);
+                this.atoms = DIRECTION.LEFT_ARR();
                 break;
             default:throw new Error("不支持的方向");
         }
