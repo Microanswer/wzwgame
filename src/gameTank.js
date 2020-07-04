@@ -1,5 +1,117 @@
 ;(function (window) {
 
+    var WzwScreen = window.WzwScreen;
+
+    // 各个等级下的更新速度，坦克(敌方)的运动速度
+    var LEVELS = [550, 500, 450, 400, 350, 300, 250, 200, 150, 130, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 5];
+
+    // 角色，就两种， 敌方和我放
+    var ROLE = {
+        HERO: 1, // 我方
+        FOE: 2   // 敌方
+    };
+
+    // 坦克的方向，有：上、下、左、右
+    var DIRECTION = {
+        UP: 1,
+        RIGHT: 2,
+        BOTTOM: 3,
+        LEFT: 4
+    };
+
+    // 子弹类
+    function Ball(tanker) {
+
+        // this.tanker 子弹类里有一个tanker属性，以知晓这个子弹是来自哪一个坦克的。
+    }
+
+    /**
+     * 坦克类
+     * @param offsetRow 行偏移量
+     * @param offsetCol 列偏移量 (行列偏移量都是相对于左上角的点来说的)
+     * @param role 坦克角色
+     * @param direction 坦克方向
+     * @constructor
+     */
+    function Tanker(offsetRow, offsetCol, role, direction) {
+        // 坦克大小就3×3的的。
+        this.width         = 3;
+        this.height        = 3;
+        this.offsetRow     = offsetRow;
+        this.offsetCol     = offsetCol;
+        this.role          = role;
+        this.direction     = direction;
+
+        // 如果坦克是英雄角色(就是玩家)，那么这个坦克中心的点阵会不停的闪烁，以方便识别这是英雄。
+        // 此字段表示闪烁的间隔时间。（毫秒）
+        this.heropointtime = 50;
+
+        this.initAtoms();
+    }
+
+    /**
+     * 初始化坦克的点阵。这个点阵会根据坦克的方向进行初始化/
+     */
+    Tanker.prototype.initAtoms = function (){
+        this.atoms = [];
+        switch (this.direction) {
+            case DIRECTION.UP:
+                this.atoms.push([0,1,0]);
+                this.atoms.push([1,1,1]);
+                this.atoms.push([1,0,1]);
+                break;
+            case DIRECTION.RIGHT:
+                this.atoms.push([1,1,0]);
+                this.atoms.push([0,1,1]);
+                this.atoms.push([1,1,0]);
+                break;
+            case DIRECTION.BOTTOM:
+                this.atoms.push([1,0,1]);
+                this.atoms.push([1,1,1]);
+                this.atoms.push([0,1,0]);
+                break;
+            case DIRECTION.LEFT:
+                this.atoms.push([0,1,1]);
+                this.atoms.push([1,1,0]);
+                this.atoms.push([0,1,1]);
+                break;
+            default:throw new Error("不支持的方向");
+        }
+    };
+
+    /**
+     *  应用点阵。此方法在游戏的 onUpdate 方法里被调用，目的在于将坦克本身放入点阵数组里面，
+     *  这样在渲染的时候就可以把坦克显示出来了。
+     * @param atoms
+     */
+    Tanker.prototype.applyAtom = function (atoms) {
+        for (var i = 0; i < this.height; i++) {
+            for (var j = 0; j < this.width; j++) {
+                if (this.atoms[i][j] === 1) {
+                    atoms[this.offsetRow + i][this.offsetCol + j] = this.atoms[i][j];
+                }
+            }
+        }
+    }
+
+    /**
+     * 此方法应该在游戏的 onUpdate 调用，不判断任何条件的调用。
+     */
+    Tanker.prototype.update = function () {
+
+        if (this.role === ROLE.HERO) {
+            if ((Date.now() - (this.heropointLastTime||0)) >= this.heropointLastTime) {
+                this.atoms[2][2] = this.atoms[2][2] === 1 ? 0 : 1;
+            }
+
+            this.heropointLastTime = Date.now();
+        }
+    }
+
+
+
+
+    // ==============下面是游戏实现代码===============
 
     /**
      * 坦克游戏实现。
@@ -169,6 +281,62 @@
                 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             ],
         ];
+    }
+
+    // ===============以上为预览实现==================
+    //
+    // ===============以下为玩法实现==================
+
+    // 【生命周期函数】当游戏启动时调用。
+    Tank.prototype.onLaunch = function () {
+        initForNewGame.call(this);
+    };
+
+    // 【生命周期函数】游戏过程中，此方法会不停的被调用。应当返回一个二维数组，此二维数组就会渲染到界面。
+    Tank.prototype.onUpdate = function () {
+
+    };
+
+    // 【生命周期函数】游戏过程中，此方法会不同的被调用。返回一个二维数组，此二维数组会渲染到右侧的小点阵区域。
+    Tank.prototype.onUpdateStatus = function () {
+
+    };
+
+    // 【生命周期函数】游戏结束时调用。比如:玩着玩着用户按一下复位按钮，此时动画执行到满屏，会调用该函数，游戏应该清除自己的状态。
+    Tank.prototype.onDestroy = function () {};
+
+    // 【事件函数】当某按键抬起时调用
+    Tank.prototype.onKeyup = function (key) {};
+
+    // 【事件函数】当某按键按下时调用
+    Tank.prototype.onKeyDown = function (key) {};
+
+    /**
+     * 初始化，此方法应该在开始一局全新的游戏时调用。
+     */
+    function initForNewGame() {
+
+        // 初始化有3条命。同时正好使用这个来渲染右侧的小点阵，来表示用户还有几条命。
+        this.lifes = [[0,0,0,0]];
+        this.lifeCount = 3;
+        for (var i = 0; i < this.lifeCount; i++) {
+            this.lifes.push([1,1,1,1]);
+        }
+
+        // 游戏二维数组
+        this.atoms = this.launch.screen.makeNewArr();
+
+        // 创建
+
+    }
+
+    /**
+     * 使用一个玩家。此方法调用一次，就从玩家的所有命数中取一条命。当此方法返回null时，没有生命了。
+     */
+    function useaHero () {
+        for (var i = 0; i < 4 - this.lifeCount; i++) {
+            this.lifes[i] = [0,0,0,0];
+        }
     }
 
     window.Tank = Tank;
