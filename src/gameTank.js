@@ -146,7 +146,21 @@
         this.heropointtime = 20;
 
         this.initAtoms();
+
+        this.init();
     }
+
+    /**
+     * 一些初始化。
+     */
+    Tanker.prototype.init = function () {
+        // 针对敌方坦克，随机的在一出来就发出一个子弹。
+        if (this.role === ROLE.FOE) {
+            if (WzwScreen.random(0, 10) >= 3) {
+                this.shoot();
+            }
+        }
+    };
 
     /**
      * 初始化坦克的点阵。这个点阵会根据坦克的方向进行初始化/
@@ -194,7 +208,8 @@
     };
 
     /**
-     * 此方法应该在游戏的 onUpdate 调用，不判断任何条件的调用。
+     * 此方法应该在游戏的 onUpdate 调用，不判断任何条件的调用。所以此方法会很快被调用无数次。
+     * 对于敌人的更新， 受到关卡的限定，所以不能在这里面进行， 在 updateEOF里面。
      */
     Tanker.prototype.update = function () {
 
@@ -210,6 +225,25 @@
             if (this.balls[i].available) {
                 this.balls[i].update();
             }
+        }
+    };
+
+    /**
+     * 更新敌人的状态，这里面实现了敌人的自动移动和自动发射子弹。
+     */
+    Tanker.prototype.updateEOF = function (){
+        var moveOrTurn = WzwScreen.random(0, 5);
+        if (moveOrTurn >= 2) {
+            // 移动一格。
+            this.moveTo(this.direction, 1);
+        } else {
+            // 转向
+            this.moveTo(this.getDiffDirection(), 1);
+        }
+
+        var doShoot = WzwScreen.random(0, 10);
+        if (doShoot >= 5) {
+            this.shoot();
         }
     };
 
@@ -299,6 +333,36 @@
             _this.balls.splice(i, 1);
         });
         _this.balls.push(ball);
+    }
+
+    /**
+     * 判断某个点阵是否在这个坦克的范围内。
+     */
+    Tanker.prototype.isAtomIn = function(row, col) {
+        if (this.offsetRow <= row && row <= (this.offsetRow + 2)) {
+            if (this.offsetCol <= col && col <= (this.offsetCol + 2)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 获取一个和当前坦克方向不一样的其它方向。
+     */
+    Tanker.prototype.getDiffDirection = function () {
+        var dirs;
+        if (this.direction === DIRECTION.UP) {
+            dirs = [DIRECTION.RIGHT, DIRECTION.BOTTOM,DIRECTION.LEFT];
+        } else if (this.direction === DIRECTION.RIGHT) {
+            dirs = [DIRECTION.LEFT, DIRECTION.BOTTOM,DIRECTION.LEFT];
+        } else if (this.direction === DIRECTION.BOTTOM) {
+            dirs = [DIRECTION.RIGHT, DIRECTION.UP,DIRECTION.LEFT];
+        } else if (this.direction === DIRECTION.LEFT) {
+            dirs = [DIRECTION.RIGHT, DIRECTION.BOTTOM,DIRECTION.UP];
+        }
+
+        return dirs[WzwScreen.random(0, dirs.length)];
     }
 
 
@@ -495,6 +559,28 @@
             this.hreo.applyAtom(this.atoms);
         }
 
+        if (this.tankers) {
+            for (var i = 0; i < this.tankers.length; i++) {
+                this.tankers[i].update();
+                this.tankers[i].applyAtom(this.atoms);
+            }
+        }
+
+        // 敌人的运行速度受关卡限定，关卡越搞，速度越快。
+        if ((Date.now() - (this.gameLastTime||0))>=LEVELS[this.level]) {
+
+            makeaFOE.call(this);
+
+            if (this.tankers) {
+                for (var i = 0; i < this.tankers.length; i++) {
+                    this.tankers[i].updateEOF();
+                }
+            }
+
+            this.gameLastTime = Date.now();
+        }
+
+
         return this.atoms;
     };
 
@@ -529,6 +615,8 @@
      */
     function initForNewGame() {
 
+        this.level = 0;
+
         // 初始化有3条命。同时正好使用这个来渲染右侧的小点阵，来表示用户还有几条命。
         this.lifes = [[0,0,0,0]];
         this.lifeCount = 3;
@@ -539,6 +627,8 @@
         // 使用玩家的生命数创建一个英雄。
         this.hreo = useaHero.call(this);
 
+        // 敌方坦克集合
+        this.tankers = [];
     }
 
     /**
@@ -559,6 +649,107 @@
         }
 
         return new Tanker(9, 4, ROLE.HERO, DIRECTION.UP, this.launch);
+    }
+
+    /**
+     * 随机从屏幕的四个角落产生敌方坦克。
+     */
+    function makeaFOE() {
+
+        // 屏幕上最多3个坦克。
+        if (this.tankers.length >= 3) {
+            return;
+        }
+
+        var pss = findEOFAvailablePosition.call(this, this.tankers, this.hreo);
+        var ps = pss[WzwScreen.random(0, pss.length)];
+
+        if (ps === 'top_left') {
+            this.tankers.push(new Tanker(0, 0, ROLE.FOE, DIRECTION.BOTTOM, this.launch));
+        } else if (ps === 'top_right') {
+            this.tankers.push(new Tanker(0, this.launch.screen.option.atomColCount-3, ROLE.FOE, DIRECTION.BOTTOM, this.launch));
+        } else if (ps === 'bottom_left') {
+            this.tankers.push(new Tanker(this.launch.screen.option.atomRowCount-3, 0, ROLE.FOE, DIRECTION.UP, this.launch));
+        } else if (ps === 'bottom_right') {
+            this.tankers.push(new Tanker(this.launch.screen.option.atomRowCount-3, this.launch.screen.option.atomColCount-3, ROLE.FOE, DIRECTION.UP, this.launch));
+        }
+    }
+
+    /**
+     * 寻找适合产生敌方坦克的位置。 这个方法返回一个数组。
+     * ['top_left', 'top_right',...]
+     *
+     * 传入现有的敌方坦克和玩家坦克，以确定它们是否占据了即将要产生的新坦克的位置。
+     */
+    function findEOFAvailablePosition (tankers, hero) {
+        let result = [];
+
+        // 判断上左
+        var topLeftJudgeArr = this.topLeftJudgeArr = this.topLeftJudgeArr || [
+            [0, 2],
+            [1, 2],
+            [2, 2],
+            [2, 0],
+            [2, 1],
+        ];
+
+        if (!judgeArrHasTanker(topLeftJudgeArr, tankers, hero)) {
+            result.push('top_left');
+        }
+
+        // 判断上右
+        var topRightJudgeArr = this.topRightJudgeArr = this.topRightJudgeArr || [
+            [0, this.launch.screen.option.atomColCount - 3],
+            [1, this.launch.screen.option.atomColCount - 3],
+            [2, this.launch.screen.option.atomColCount - 3],
+            [2, this.launch.screen.option.atomColCount - 2],
+            [2, this.launch.screen.option.atomColCount - 1],
+        ];
+        if (!judgeArrHasTanker(topRightJudgeArr, tankers, hero)) {
+            result.push('top_right');
+        }
+
+        // 判断下左
+        var bottomLeftJudgeArr = this.bottomLeftJudgeArr = this.bottomLeftJudgeArr || [
+            [this.launch.screen.option.atomRowCount - 1, 2],
+            [this.launch.screen.option.atomRowCount - 2, 2],
+            [this.launch.screen.option.atomRowCount - 3, 2],
+            [this.launch.screen.option.atomRowCount - 3, 1],
+            [this.launch.screen.option.atomRowCount - 3, 0],
+        ];
+        if (!judgeArrHasTanker(bottomLeftJudgeArr, tankers, hero)) {
+            result.push('bottom_left');
+        }
+
+        // 判断下右
+        var bottomRightJudgeArr = this.bottomRightJudgeArr = this.bottomRightJudgeArr || [
+            [this.launch.screen.option.atomRowCount - 1, this.launch.screen.option.atomColCount - 3],
+            [this.launch.screen.option.atomRowCount - 2, this.launch.screen.option.atomColCount - 3],
+            [this.launch.screen.option.atomRowCount - 3, this.launch.screen.option.atomColCount - 3],
+            [this.launch.screen.option.atomRowCount - 3, this.launch.screen.option.atomColCount - 2],
+            [this.launch.screen.option.atomRowCount - 3, this.launch.screen.option.atomColCount - 1],
+        ];
+        if (!judgeArrHasTanker(bottomRightJudgeArr, tankers, hero)) {
+            result.push('bottom_right');
+        }
+
+        return result;
+    }
+
+    function judgeArrHasTanker (judgeArr, tankers, hero) {
+        for (var j = 0; j < judgeArr.length; j++) {
+            for (var i = 0; i < tankers.length; i++) {
+
+                // 某个坦克里包含了这个点阵。
+                if (tankers[i].isAtomIn(judgeArr[j][0], judgeArr[j][1])) {
+                    return true;
+                }
+            }
+            if (hero && hero.isAtomIn(judgeArr[j][0], judgeArr[j][1])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     window.Tank = Tank;
