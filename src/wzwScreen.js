@@ -111,6 +111,7 @@
      * 界面上可以对应显示。
      */
     WzwScreen.prototype.updateAtomArr = function (atomsArr) {
+        this.atoms = undefined;
         this.atoms = atomsArr;
     };
 
@@ -119,6 +120,7 @@
      * @param atomsArr
      */
     WzwScreen.prototype.updateStatusAtoms = function (atomsArr) {
+        this.statusAtoms = undefined;
         this.statusAtoms = atomsArr;
     }
 

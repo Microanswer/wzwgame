@@ -254,6 +254,7 @@
             // 没有正在玩游戏，则渲染这个游戏的预览界面。
             // 使用当前选中的游戏进行预览渲染。
             this.atoms = getPreviewAtoms.call(this);
+            this.statusAtoms = undefined;
         }
 
 

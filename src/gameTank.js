@@ -102,9 +102,11 @@
             }
             this.lastTime = Date.now();
         }
-
         // 检查位置是否可用。即判断是否跑出屏幕外面了。
         this.offsetAvailable();
+
+        // 检查打没打到人。
+        this.checkKilled();
     };
 
     Ball.prototype.offsetAvailable = function () {
@@ -120,6 +122,42 @@
         }
     }
 
+    Ball.prototype.checkKilled = function () {
+        var _this = this;
+
+        try {
+            if (_this.tanker.role === ROLE.HERO) {
+                // 玩家的子弹是否打中敌机。
+                WzwScreen.each(_this.tanker.tank.tankers, function (tanker, index) {
+                    if (tanker.isAtomIn(_this.offsetRow, _this.offsetCol)) {
+                        // 打中了。使用 throw 可以直接中断 each 循环。
+                        throw {message: "killed", index: index, tanker: tanker};
+                    }
+                })
+            }
+        }catch (e) {
+            if (e.message === "killed") {
+
+                if (e.tanker.role === ROLE.FOE) {
+                    // 敌人被杀。 删除这个敌人。
+                    _this.tanker.tank.tankers.splice(e.index, 1);
+
+                    // 然后让子弹消失。
+
+                    _this.available = false;
+                    if (_this.onUnAvailable) {
+                        _this.onUnAvailable(_this);
+                    }
+                } else if (e.tanker.role === ROLE.HERO) {
+                    // 玩家被杀。。。
+                    _this.tanker.tank.hreo = undefined;
+
+                }
+
+            }
+        }
+    }
+
 
     /**
      * 坦克类
@@ -129,7 +167,7 @@
      * @param direction 坦克方向
      * @constructor
      */
-    function Tanker(offsetRow, offsetCol, role, direction, launch) {
+    function Tanker(offsetRow, offsetCol, role, direction, tank) {
         // 坦克大小就3×3的的。
         this.width         = 3;
         this.height        = 3;
@@ -137,9 +175,9 @@
         this.offsetCol     = offsetCol;
         this.role          = role;
         this.direction     = direction;
-        this.balls         = []; // 子弹列表
-
-        this.launch        = launch;
+        this.balls         = [];            // 子弹列表
+        this.tank          = tank;          // 游戏实列
+        this.launch        = tank.launch;   // 启动器实列。
 
         // 如果坦克是英雄角色(就是玩家)，那么这个坦克中心的点阵会不停的闪烁，以方便识别这是英雄。
         // 此字段表示闪烁的间隔时间。（毫秒）
@@ -278,6 +316,10 @@
             return;
         }
 
+        if (this.hasTankerOn(DIRECTION.UP)) {
+            return;
+        }
+
         this.offsetRow -= count;
     };
 
@@ -288,6 +330,10 @@
             return;
         }
         if ((this.offsetCol + 2) >= this.launch.screen.option.atomColCount - 1) {
+            return;
+        }
+
+        if (this.hasTankerOn(DIRECTION.RIGHT)) {
             return;
         }
 
@@ -303,6 +349,12 @@
         if ((this.offsetRow + 2) >= this.launch.screen.option.atomRowCount - 1) {
             return;
         }
+
+
+        if (this.hasTankerOn(DIRECTION.BOTTOM)) {
+            return;
+        }
+
         this.offsetRow += count;
     };
 
@@ -315,8 +367,84 @@
         if (this.offsetCol <= 0) {
             return;
         }
+
+        if (this.hasTankerOn(DIRECTION.LEFT)) {
+            return;
+        }
+
+
         this.offsetCol -= count;
     };
+
+    // 此坦克指定方向边有坦克的话此方法将返回true。
+    Tanker.prototype.hasTankerOn = function (direction) {
+        try {
+
+            var colFlag = 0, rowFlag = 0;
+            switch (direction) {
+                case DIRECTION.LEFT:   colFlag = -1; break;
+                case DIRECTION.UP:     rowFlag = -1; break;
+                case DIRECTION.RIGHT:  colFlag =  1; break;
+                case DIRECTION.BOTTOM: rowFlag =  1; break;
+            }
+
+            var _this = this;
+            var sideAtoms = _this.getSideAtoms(direction);
+            // 判断此坦克的指定方向边有没有坦克。
+            WzwScreen.each(_this.tank.tankers, function (tanker) {
+                if (_this !== tanker) {
+                    WzwScreen.each(sideAtoms, function (atom) {
+                        if (tanker.isAtomIn(atom[0] + rowFlag, atom[1] + colFlag)) {
+                            throw "yes";
+                        }
+                    });
+                }
+            });
+
+            // 如果是敌方坦克，记得还要判断别往玩家身上跑
+            if (_this.role === ROLE.FOE) {
+                WzwScreen.each(sideAtoms, function (atom) {
+                    if (_this.tank.hreo && _this.tank.hreo.isAtomIn(atom[0] + rowFlag, atom[1] + colFlag)) {
+                        throw "yes";
+                    }
+                });
+            }
+
+        }catch (e) {
+            return true;
+        }
+        return false;
+    };
+
+    // 获取指定方向边缘的点
+    Tanker.prototype.getSideAtoms = function (direction) {
+        switch (direction) {
+            case DIRECTION.LEFT:
+                return [
+                    [this.offsetRow + 0, this.offsetCol + 1],
+                    [this.offsetRow + 1, this.offsetCol + 0],
+                    [this.offsetRow + 2, this.offsetCol + 1]
+                ];
+            case DIRECTION.UP:
+                return [
+                    [this.offsetRow + 1, this.offsetCol + 0],
+                    [this.offsetRow + 0, this.offsetCol + 1],
+                    [this.offsetRow + 1, this.offsetCol + 2]
+                ];
+            case DIRECTION.RIGHT:
+                return [
+                    [this.offsetRow + 0, this.offsetCol + 1],
+                    [this.offsetRow + 1, this.offsetCol + 2],
+                    [this.offsetRow + 2, this.offsetCol + 1]
+                ];
+            case DIRECTION.BOTTOM:
+                return [
+                    [this.offsetRow + 1, this.offsetCol + 0],
+                    [this.offsetRow + 2, this.offsetCol + 1],
+                    [this.offsetRow + 1, this.offsetCol + 2]
+                ];
+        }
+    }
 
     /**
      * 发射子弹。
@@ -648,7 +776,7 @@
             this.lifes[i] = [0,0,0,0];
         }
 
-        return new Tanker(9, 4, ROLE.HERO, DIRECTION.UP, this.launch);
+        return new Tanker(9, 4, ROLE.HERO, DIRECTION.UP, this);
     }
 
     /**
@@ -665,13 +793,13 @@
         var ps = pss[WzwScreen.random(0, pss.length)];
 
         if (ps === 'top_left') {
-            this.tankers.push(new Tanker(0, 0, ROLE.FOE, DIRECTION.BOTTOM, this.launch));
+            this.tankers.push(new Tanker(0, 0, ROLE.FOE, DIRECTION.BOTTOM, this));
         } else if (ps === 'top_right') {
-            this.tankers.push(new Tanker(0, this.launch.screen.option.atomColCount-3, ROLE.FOE, DIRECTION.BOTTOM, this.launch));
+            this.tankers.push(new Tanker(0, this.launch.screen.option.atomColCount-3, ROLE.FOE, DIRECTION.BOTTOM, this));
         } else if (ps === 'bottom_left') {
-            this.tankers.push(new Tanker(this.launch.screen.option.atomRowCount-3, 0, ROLE.FOE, DIRECTION.UP, this.launch));
+            this.tankers.push(new Tanker(this.launch.screen.option.atomRowCount-3, 0, ROLE.FOE, DIRECTION.UP, this));
         } else if (ps === 'bottom_right') {
-            this.tankers.push(new Tanker(this.launch.screen.option.atomRowCount-3, this.launch.screen.option.atomColCount-3, ROLE.FOE, DIRECTION.UP, this.launch));
+            this.tankers.push(new Tanker(this.launch.screen.option.atomRowCount-3, this.launch.screen.option.atomColCount-3, ROLE.FOE, DIRECTION.UP, this));
         }
     }
 
