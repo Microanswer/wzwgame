@@ -1012,4 +1012,50 @@
     };
 
     window.WzwScreen = WzwScreen;
+
+
+    // 爆炸类。
+    function Bomb(param) {
+        param = param || {};
+
+        this.height = 4;
+        this.width  = 4;
+        this.time   = 50;
+        this.offsetRow = param.offsetRow;
+        this.offsetCol = param.offsetCol;
+        this.frams  =
+            [
+               [[1,0,0,1],
+                [0,1,1,0],
+                [0,1,1,0],
+                [1,0,0,1]],
+
+               [[0,1,1,0],
+                [1,0,0,1],
+                [1,0,0,1],
+                [0,1,1,0]]
+            ];
+        this.currentFram = 0;
+        this.keepTime = param.keepTime || 1000; // 爆炸持续时间 （毫秒）
+
+        var _this = this;
+        setTimeout(function () {
+            if (param.onEnd) {
+                param.onEnd.call(_this);
+            }
+        }, this.keepTime);
+    }
+
+    Bomb.prototype.update = function () {
+        if (Date.now() - (this.lastTime || 0) >= this.time) {
+            this.currentFram = this.currentFram === 0 ? 1 : 0;
+            this.lastTime = Date.now();
+        }
+    }
+
+    Bomb.prototype.getCurrentFrame = function () {
+        return this.frams[this.currentFram];
+    }
+
+    window.WzwBomb = Bomb;
 })(window);

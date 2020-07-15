@@ -171,7 +171,7 @@
     }
 
     /**
-     * 模拟按下某个按钮
+     * 模拟抬起某个按钮
      * @param key
      */
     function onKeyUp(key) {

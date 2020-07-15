@@ -2,7 +2,7 @@ html,body {
     margin: 0;
     padding: 0;
     height: 100%;
-    background: #019cd6;
+    background: #e3e6e7;
 }
 tr td {
     text-align: center;
@@ -60,6 +60,9 @@ tr td {
 
 .pb-50 {
     padding-bottom: 50px!important;
+}
+.mt-20 {
+    margin-top: 20px!important;
 }
 
 .flex-page {
@@ -138,4 +141,21 @@ tr td {
 
 .game .game-body table {
     margin: 0 auto;
+}
+
+
+.right {
+    margin-left: 20px;
+}
+
+.right .txt-borad {
+    overflow: hidden;
+    width: 240px;
+    background: #019CD6;
+    padding: 8px 25px 30px 25px;
+    border-radius: 45px;
+    color: white;
+
+    box-shadow: 10px 20px 30px rgba(0, 0, 0, 0.8);
+
 }

@@ -1,11 +1,35 @@
 ;(function (window) {
 
     var WzwScreen = window.WzwScreen;
+    var WzwBomb   = window.WzwBomb;
 
     var BALLMAXCOUNT = 3;
 
     // 各个等级下的更新速度，坦克(敌方)的运动速度
     var LEVELS = [550, 500, 450, 400, 350, 300, 250, 200, 150, 130, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 5];
+
+    var SCORE_LEVELS = {
+        "13": 1,
+        "20": 2,
+        "30": 3,
+        "40": 4,
+        "50": 5,
+        "60": 6,
+        "70": 7,
+        "80": 8,
+        "90": 9,
+        "100": 10,
+        "110": 11,
+        "120": 12,
+        "130": 13,
+        "140": 14,
+        "150": 15,
+        "160": 16,
+        "170": 17,
+        "180": 18,
+        "190": 19,
+        "200": 20,
+    };
 
     // 角色，就两种， 敌方和我放
     var ROLE = {
@@ -39,6 +63,14 @@
             return [[0,1,1],
                     [1,1,0],
                     [0,1,1]]},
+    };
+
+    // 游戏状态
+    var GAME_STATUS = {
+        NORMAL: 1,  // 正常游戏。
+        KILLED: 2,  // 玩家被打。
+        PAUSED: 3,  // 游戏暂停。
+        GAMEOVER: 6, // 游戏结束。
     };
 
     /**
@@ -134,6 +166,11 @@
                         throw {message: "killed", index: index, tanker: tanker};
                     }
                 })
+            } else if (_this.tanker.role === ROLE.FOE) {
+                // 敌人的子弹
+                if (_this.tanker.tank.hreo.isAtomIn(_this.offsetRow, _this.offsetCol)) {
+                    throw {message: "killed", index: 0, tanker: _this.tanker.tank.hreo};
+                }
             }
         }catch (e) {
             if (e.message === "killed") {
@@ -141,19 +178,19 @@
                 if (e.tanker.role === ROLE.FOE) {
                     // 敌人被杀。 删除这个敌人。
                     _this.tanker.tank.tankers.splice(e.index, 1);
-
-                    // 然后让子弹消失。
-
-                    _this.available = false;
-                    if (_this.onUnAvailable) {
-                        _this.onUnAvailable(_this);
-                    }
+                    _this.tanker.tank.onEofKill();
                 } else if (e.tanker.role === ROLE.HERO) {
-                    // 玩家被杀。。。
-                    _this.tanker.tank.hreo = undefined;
-
+                    // 玩家被杀。。。有可能同时多个子弹打中玩家，只需要让一个子弹的生效就好了。
+                    if (_this.tanker.tank.status === GAME_STATUS.NORMAL) {
+                        _this.tanker.tank.onHeroKill();
+                    }
                 }
 
+                // 然后让子弹消失。
+                _this.available = false;
+                if (_this.onUnAvailable) {
+                    _this.onUnAvailable(_this);
+                }
             }
         }
     }
@@ -270,17 +307,17 @@
      * 更新敌人的状态，这里面实现了敌人的自动移动和自动发射子弹。
      */
     Tanker.prototype.updateEOF = function (){
-        var moveOrTurn = WzwScreen.random(0, 5);
-        if (moveOrTurn >= 2) {
+        var moveOrTurn = WzwScreen.random(0, 100);
+        if (moveOrTurn >= 30) { // 70%
             // 移动一格。
             this.moveTo(this.direction, 1);
-        } else {
+        } else {  // 70%
             // 转向
             this.moveTo(this.getDiffDirection(), 1);
         }
 
-        var doShoot = WzwScreen.random(0, 10);
-        if (doShoot >= 5) {
+        var doShoot = WzwScreen.random(0, 100);
+        if (doShoot >= 70) { // 30%
             this.shoot();
         }
     };
@@ -451,6 +488,12 @@
      */
     Tanker.prototype.shoot = function () {
         var _this = this;
+
+        if (_this.tank.status === GAME_STATUS.KILLED && _this.role === ROLE.HERO) {
+            // 玩家被杀了，就不能发射子弹了。
+            return;
+        }
+
         if (_this.balls.length >= BALLMAXCOUNT) { // 限定子弹个数。
             return;
         }
@@ -492,7 +535,6 @@
 
         return dirs[WzwScreen.random(0, dirs.length)];
     }
-
 
 
     // ==============下面是游戏实现代码===============
@@ -678,14 +720,14 @@
 
     // 【生命周期函数】游戏过程中，此方法会不停的被调用。应当返回一个二维数组，此二维数组就会渲染到界面。
     Tank.prototype.onUpdate = function () {
+
+        // 暂停了就什么逻辑都不执行，直接返回。
+        if (this.status === GAME_STATUS.PAUSED) {
+            return this.atoms;
+        }
+
         // 游戏二维数组
         this.atoms = this.launch.screen.makeNewArr();
-
-        if (this.hreo) {
-            this.hreo.update();
-
-            this.hreo.applyAtom(this.atoms);
-        }
 
         if (this.tankers) {
             for (var i = 0; i < this.tankers.length; i++) {
@@ -708,6 +750,18 @@
             this.gameLastTime = Date.now();
         }
 
+        if (this.hreo) {
+            this.hreo.update();
+
+            this.hreo.applyAtom(this.atoms);
+        }
+
+        // 玩家被杀了。
+        if (this.bomb && this.status === GAME_STATUS.KILLED) {
+            this.bomb.update();
+
+            WzwScreen.mergeArr(this.bomb.getCurrentFrame(), this.atoms, this.bomb.offsetRow, this.bomb.offsetCol);
+        }
 
         return this.atoms;
     };
@@ -718,13 +772,38 @@
     };
 
     // 【生命周期函数】游戏结束时调用。比如:玩着玩着用户按一下复位按钮，此时动画执行到满屏，会调用该函数，游戏应该清除自己的状态。
-    Tank.prototype.onDestroy = function () {};
+    Tank.prototype.onDestroy = function () {
+        this.hreo = undefined;
+        this.score = 0;
+        this.level = 0;
+        this.tankers = [];
+        this.bomb = undefined;
+        this.status = GAME_STATUS.GAMEOVER;
+
+        this.launch.screen.setBest(0);
+        this.launch.screen.setScore(0);
+        this.launch.screen.setLevel(0);
+        this.launch.screen.setPause(false);
+    };
 
     // 【事件函数】当某按键抬起时调用
-    Tank.prototype.onKeyup = function (key) {};
+    Tank.prototype.onKeyup = function (key) {
+        if (key === "start") {
+            if (this.status === GAME_STATUS.PAUSED) {
+                this.status = this.oldStatus;
+                this.launch.screen.setPause(false);
+            } else {
+                this.oldStatus = this.status;
+                this.status = GAME_STATUS.PAUSED;
+                this.launch.screen.setPause(true);
+            }
+        }
+    };
 
     // 【事件函数】当某按键按下时调用
     Tank.prototype.onKeyDown = function (key) {
+        if (!this.hreo) {return;}
+
         if (key === "up") {
             this.hreo.moveToUp(1);
         } else if (key === "right") {
@@ -739,11 +818,46 @@
     };
 
     /**
+     * 当敌人被杀时调用。
+     */
+    Tank.prototype.onEofKill = function () {
+        this.score += 1;
+
+        this.launch.screen.setScore(this.score);
+
+        var l = SCORE_LEVELS[String(this.score)];
+        if (l && l > this.level) {
+            this.level = l;
+            this.launch.screen.setLevel(l);
+        }
+
+    };
+
+    /**
+     * 当玩家被杀时调用。
+     */
+    Tank.prototype.onHeroKill = function() {
+        this.status = GAME_STATUS.KILLED;
+        var _this = this;
+        _this.bomb = new WzwBomb({
+            offsetRow: _this.hreo.offsetRow,
+            offsetCol: _this.hreo.offsetCol,
+            onEnd: function () {
+                startForNewHreo.call(_this);
+            }
+        });
+
+        this.hreo = undefined;
+    }
+
+    /**
      * 初始化，此方法应该在开始一局全新的游戏时调用。
      */
     function initForNewGame() {
 
         this.level = 0;
+
+        this.score = 0;
 
         // 初始化有3条命。同时正好使用这个来渲染右侧的小点阵，来表示用户还有几条命。
         this.lifes = [[0,0,0,0]];
@@ -752,11 +866,28 @@
             this.lifes.push([1,1,1,1]);
         }
 
+        startForNewHreo.call(this);
+    }
+
+    // 每新使用一个玩家，都是用此方法进行回合重启。
+    function startForNewHreo() {
+
+        this.bomb = undefined;
+
         // 使用玩家的生命数创建一个英雄。
         this.hreo = useaHero.call(this);
 
+        if (!this.hreo) {
+            // 执行到这里如果没有玩家，说明玩家生命数已经耗尽。结束游戏。
+            this.status = GAME_STATUS.GAMEOVER;
+            doGameOver.call(this);
+            return;
+        }
+
         // 敌方坦克集合
         this.tankers = [];
+
+        this.status = GAME_STATUS.NORMAL;
     }
 
     /**
@@ -878,6 +1009,17 @@
             }
         }
         return false;
+    }
+
+    function doGameOver () {
+        var _this = this;
+        _this.status = GAME_STATUS.PAUSED;
+        _this.launch.screen.playAnim(WzwScreen.ANIM.B2T, function (animName, index) {
+            if (index === 0) {
+                _this.onDestroy();
+                _this.launch.exitCurentGame(); // 退出当前游戏
+            }
+        });
     }
 
     window.Tank = Tank;

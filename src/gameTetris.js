@@ -413,6 +413,7 @@
     Tetris.prototype.onDestroy = function () {
         this.reset();
         this.launch.screen.setBest(0);
+        this.launch.screen.setScore(0);
         this.launch.screen.setPause(false);
         this.launch.exitCurentGame(); // 退出当前游戏
     }
