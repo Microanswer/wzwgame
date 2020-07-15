@@ -11,8 +11,8 @@
 
     function Clicker(option) {
         this.option = option || {
-            timeout: 200,
-            dely: 200
+            timeout: 240,
+            dely: 20
         };
         this.clicks = [];
         this.tasks = [];
@@ -23,6 +23,10 @@
     };
 
     Clicker.prototype.push = function (event, timeout) {
+        if (this.holding) {
+            return;
+        }
+
         this.holding = true;
         timeout = timeout || this.option.timeout;
 
