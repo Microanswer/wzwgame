@@ -14,7 +14,7 @@
         fontHeight:    15,            // 文字行高
         background:    "#9facaa",     // 背景色
         color1:        "#000000",     // 浓颜色
-        color2:        "#898989",     // 浅颜色
+        color2:        "#8f9997",     // 浅颜色
     };
 
     var CONSTANT = {

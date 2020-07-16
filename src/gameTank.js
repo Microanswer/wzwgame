@@ -8,27 +8,29 @@
     // 各个等级下的更新速度，坦克(敌方)的运动速度
     var LEVELS = [550, 500, 450, 400, 350, 300, 250, 200, 150, 130, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 5];
 
-    var SCORE_LEVELS = {
-        "13": 1,
-        "20": 2,
-        "30": 3,
-        "40": 4,
-        "50": 5,
-        "60": 6,
-        "70": 7,
-        "80": 8,
-        "90": 9,
-        "100": 10,
-        "110": 11,
-        "120": 12,
-        "130": 13,
-        "140": 14,
-        "150": 15,
-        "160": 16,
-        "170": 17,
-        "180": 18,
-        "190": 19,
-        "200": 20,
+    // 指定关卡需要射击多少个坦克才可以提升关卡。
+    var SHOOT_LEVELS = {
+        '0':  2,
+        '1':  3,
+        '2':  25,
+        '3':  32,
+        '4':  40,
+        '5':  50,
+        '6':  60,
+        '7':  75,
+        '8':  90,
+        '9':  100,
+        '10': 110,
+        '11': 120,
+        '12': 130,
+        '13': 140,
+        '14': 150,
+        '15': 160,
+        '16': 170,
+        '17': 180,
+        '18': 190,
+        '19': 200,
+        '20': 300,
     };
 
     // 角色，就两种， 敌方和我放
@@ -99,6 +101,14 @@
     }
 
     Ball.prototype.initBallOffset = function () {
+
+        // 发射子弹的是boss。
+        if (this.tanker.boss) {
+            this.offsetRow = this.tanker.offsetRow + 7;
+            this.offsetCol = this.tanker.offsetCol + 3;
+            return;
+        }
+
         if (this.tanker.direction === DIRECTION.UP) {
             this.offsetRow = this.tanker.offsetRow;
             this.offsetCol = this.tanker.offsetCol + 1;
@@ -166,6 +176,11 @@
                         throw {message: "killed", index: index, tanker: tanker};
                     }
                 })
+
+                if (_this.tanker.tank.boss.isAtomIn(_this.offsetRow, _this.offsetCol)) {
+                    throw {message: "killed", index: 0, tanker: _this.tanker.tank.boss};
+                }
+
             } else if (_this.tanker.role === ROLE.FOE) {
                 // 敌人的子弹
                 if (_this.tanker.tank.hreo.isAtomIn(_this.offsetRow, _this.offsetCol)) {
@@ -176,9 +191,14 @@
             if (e.message === "killed") {
 
                 if (e.tanker.role === ROLE.FOE) {
-                    // 敌人被杀。 删除这个敌人。
-                    _this.tanker.tank.tankers.splice(e.index, 1);
-                    _this.tanker.tank.onEofKill();
+                    if (e.tanker.boss) {
+                        // boss被杀。
+                        _this.tanker.tank.onBossKill();
+                    } else {
+                        // 敌人被杀。 删除这个敌人。
+                        _this.tanker.tank.tankers.splice(e.index, 1);
+                        _this.tanker.tank.onEofKill();
+                    }
                 } else if (e.tanker.role === ROLE.HERO) {
                     // 玩家被杀。。。有可能同时多个子弹打中玩家，只需要让一个子弹的生效就好了。
                     if (_this.tanker.tank.status === GAME_STATUS.NORMAL) {
@@ -231,7 +251,7 @@
     Tanker.prototype.init = function () {
         // 针对敌方坦克，随机的在一出来就发出一个子弹。
         if (this.role === ROLE.FOE) {
-            if (WzwScreen.random(0, 10) >= 3) {
+            if (WzwScreen.random(0, 10) > 6) {
                 this.shoot();
             }
         }
@@ -320,6 +340,11 @@
         if (doShoot >= 70) { // 30%
             this.shoot();
         }
+    };
+
+    Tanker.prototype.turnTo = function (direction) {
+        this.atoms = DIRECTION.UP_ARR();
+        this.direction = DIRECTION.UP;
     };
 
     /**
@@ -537,6 +562,142 @@
     }
 
 
+    // 关卡boss
+    function TankerBoss(offsetCol, hp, moveStepTime, tank) {
+        this.boss      = true;
+        this.direction = DIRECTION.BOTTOM;
+        this.offsetRow = -8;
+        this.offsetCol = offsetCol;
+        this.hp        = hp;            // boss 血量
+        this.tank      = tank;
+        this.launch    = tank.launch;
+        this.balls     = [];            // 子弹列表
+        this.role      = ROLE.FOE;
+        this.fram      = [
+            [1,1,0,0,0,1,1],
+            [0,1,0,0,0,1,0],
+            [1,0,1,1,1,0,1],
+            [0,1,1,0,1,1,0],
+            [1,0,1,1,1,0,1],
+            [0,1,0,1,0,1,0],
+            [1,1,0,1,0,1,1],
+            [0,0,0,1,0,0,0]
+        ];
+        this.status    = TankerBoss.STATUS.SHOWING;
+        this.moveStepTime = moveStepTime;  // 移动时序长度。
+        this.way       = 'left';     // 先向左移动
+        this.wayCount  = 1;          // 每次移动1格。
+
+        this.showingStepTime = 100; // 出场时序长度。
+
+    }
+
+    TankerBoss.prototype.updateAndApply = function (atoms) {
+        // 正在出场过程。
+        if (this.status === TankerBoss.STATUS.SHOWING) {
+
+            if (Date.now() - (this.lastStepTime||0) >= this.showingStepTime) {
+                this.offsetRow += 1;
+
+                if (this.offsetRow >= 0) {
+                    // 出场完成。
+                    this.status = TankerBoss.STATUS.SHOWED;
+                }
+                this.lastStepTime = Date.now();
+            }
+
+        } else if (this.status === TankerBoss.STATUS.SHOWED) {
+            // 出场完成。进行攻击
+
+            if (Date.now() - (this.lastStepTime || 0) >= this.moveStepTime) {
+
+                // 移动一格。
+                if (this.way === 'left') {
+                    this.offsetCol -= this.wayCount;
+
+                    if (this.offsetCol < 0) {// 已经移动到最左边，则开始向右
+                        this.way = 'right';
+                    }
+                } if (this.way === 'right') {
+                    this.offsetCol += this.wayCount;
+
+                    if (this.offsetCol + 7 >= this.tank.launch.screen.option.atomColCount) {
+                        // 已经移动到最右边，则开始向左移动
+                        this.way = 'left';
+                    }
+                } else {
+                    /* 不可能发生 */
+                }
+
+                this.shoot();
+
+                this.lastStepTime = Date.now();
+            }
+        } else if (this.status === TankerBoss.STATUS.RUNAWAYING) {
+            if (Date.now() - (this.lastStepTime||0) >= this.showingStepTime) {
+                this.offsetRow -= 1;
+
+                if (this.offsetRow <= -8) {
+                    // 逃跑完成。
+                    this.status = TankerBoss.STATUS.RUNAWAYED;
+                    if (this.onRunAwayFun) {
+                        this.onRunAwayFun.call(this);
+                    }
+                }
+                this.lastStepTime = Date.now();
+            }
+        }
+        WzwScreen.mergeArr(this.fram, atoms, this.offsetRow, this.offsetCol);
+        // 只有在正常状态才更新boss的子弹。这样当boss被打死淘宝时，就可以让其子弹不动。
+        if (this.status === TankerBoss.STATUS.SHOWED) {
+            for (var i = 0; i < this.balls.length; i++) {
+                var b = this.balls[i];
+                b.update();
+                if (b.available) {
+                    atoms[b.offsetRow][b.offsetCol] = 1;
+                }
+            }
+        }
+    };
+
+    // 发射
+    TankerBoss.prototype.shoot = function () {
+        var _this = this;
+        var ball = new Ball(_this, function (ball) {
+            var i = _this.balls.indexOf(ball);
+            if (i <= -1) {return;}
+            _this.balls.splice(i, 1);
+        });
+        _this.balls.push(ball);
+    };
+
+    // boss 血量减1
+    TankerBoss.prototype.hpDown = function () {
+        this.hp -= 1;
+    }
+
+    TankerBoss.prototype.getHp = function () {
+        return this.hp;
+    }
+
+    // boss被打死之后，逃跑。
+    TankerBoss.prototype.runAway = function () {
+        this.status = TankerBoss.STATUS.RUNAWAYING;
+    }
+
+    // 设置boss被打逃跑后的回调。
+    TankerBoss.prototype.setOnRunAway = function (fun) {
+        this.onRunAwayFun = fun;
+    }
+
+    TankerBoss.STATUS = {
+        SHOWING: 1, // boss正在出场过程。
+        SHOWED:  2, // boss出场完毕。
+        RUNAWAYING: 3, // boss逃跑中。
+        RUNAWAYED:  4, // boss逃跑完毕。
+    }
+
+
     // ==============下面是游戏实现代码===============
 
     /**
@@ -729,26 +890,36 @@
         // 游戏二维数组
         this.atoms = this.launch.screen.makeNewArr();
 
-        if (this.tankers) {
-            for (var i = 0; i < this.tankers.length; i++) {
-                this.tankers[i].update();
-                this.tankers[i].applyAtom(this.atoms);
+        // boss
+        if (this.bossMod) {
+            if (this.boss) {
+                this.boss.updateAndApply(this.atoms);
             }
-        }
-
-        // 敌人的运行速度受关卡限定，关卡越搞，速度越快。
-        if ((Date.now() - (this.gameLastTime||0))>=LEVELS[this.level]) {
-
-            makeaFOE.call(this);
+        } else {
+            // 有boss的情况下其它小兵就别搅和了。
 
             if (this.tankers) {
                 for (var i = 0; i < this.tankers.length; i++) {
-                    this.tankers[i].updateEOF();
+                    this.tankers[i].update();
+                    this.tankers[i].applyAtom(this.atoms);
                 }
             }
 
-            this.gameLastTime = Date.now();
+            // 敌人的运行速度受关卡限定，关卡越搞，速度越快。
+            if ((Date.now() - (this.gameLastTime || 0)) >= LEVELS[this.level]) {
+
+                makeaFOE.call(this);
+
+                if (this.tankers) {
+                    for (var i = 0; i < this.tankers.length; i++) {
+                        this.tankers[i].updateEOF();
+                    }
+                }
+
+                this.gameLastTime = Date.now();
+            }
         }
+
 
         if (this.hreo) {
             this.hreo.update();
@@ -756,7 +927,7 @@
             this.hreo.applyAtom(this.atoms);
         }
 
-        // 玩家被杀了。
+        // 玩家被杀了。的爆炸效果
         if (this.bomb && this.status === GAME_STATUS.KILLED) {
             this.bomb.update();
 
@@ -773,12 +944,14 @@
 
     // 【生命周期函数】游戏结束时调用。比如:玩着玩着用户按一下复位按钮，此时动画执行到满屏，会调用该函数，游戏应该清除自己的状态。
     Tank.prototype.onDestroy = function () {
-        this.hreo = undefined;
-        this.score = 0;
-        this.level = 0;
+        this.hreo    = undefined;
+        this.score   = 0;
+        this.level   = 0;
         this.tankers = [];
-        this.bomb = undefined;
-        this.status = GAME_STATUS.GAMEOVER;
+        this.bomb    = undefined;
+        this.status  = GAME_STATUS.GAMEOVER;
+        this.boss    = undefined;
+        this.bossMod = false;
 
         this.launch.screen.setBest(0);
         this.launch.screen.setScore(0);
@@ -805,16 +978,51 @@
         if (!this.hreo) {return;}
 
         if (key === "up") {
+            if (this.bossMod) return;
             this.hreo.moveToUp(1);
         } else if (key === "right") {
-            this.hreo.moveToRight(1);
+            this.hreo.moveToRight(1, !!this.bossMod);
         } else if (key === "down") {
+            if (this.bossMod) return;
             this.hreo.moveToBottom(1);
         } else if (key === "left") {
-            this.hreo.moveToLeft(1);
+            this.hreo.moveToLeft(1, !!this.bossMod);
         } else if (key === "rotate") {
             this.hreo.shoot();
         }
+    };
+
+    // 使玩家坦克自动跑到打boss的对面，也就是最下面的中间。
+    Tank.prototype.gotoBossFront = function (cb/*到达目的地时回调此方法*/) {
+        var target = [
+            this.launch.screen.option.atomRowCount - 3,
+            parseInt(((this.launch.screen.option.atomColCount - 1) / 2)-1),
+        ];
+        var dely = 100;
+
+        var _this = this;
+        function move() {
+            if (_this.hreo.offsetCol !== target[1]) {
+                console.log("col");
+                if (_this.hreo.offsetCol < target[1]) {
+                    _this.hreo.moveToRight(1);
+                    setTimeout(move, dely);
+                    return;
+                } else if (_this.hreo.offsetCol > target[1]) {
+                    _this.hreo.moveToLeft(1);
+                    setTimeout(move, dely);
+                    return;
+                }
+            } else if (_this.hreo.offsetRow !== target[0]) {
+                console.log("row");
+                _this.hreo.moveToBottom(1);
+                setTimeout(move, dely);
+            } else {
+                console.log("end");
+                cb && cb.call(_this);
+            }
+        }
+        setTimeout(move, dely);
     };
 
     /**
@@ -822,15 +1030,59 @@
      */
     Tank.prototype.onEofKill = function () {
         this.score += 1;
-
+        this.shotCount += 1;
         this.launch.screen.setScore(this.score);
 
-        var l = SCORE_LEVELS[String(this.score)];
-        if (l && l > this.level) {
-            this.level = l;
-            this.launch.screen.setLevel(l);
+        // 满足提升管卡要求？
+        if (this.shotCount >= SHOOT_LEVELS[String(this.level)]) {
+            this.levelUp();
         }
+    };
 
+    /**
+     * 提升关卡
+     */
+    Tank.prototype.levelUp = function () {
+        var _this = this;
+
+        // 打boss模式
+        _this.bossMod = true;
+
+        // 打boss时去掉其它坦克。
+        _this.tankers = [];
+
+        // 然后去到界面底部。
+        _this.gotoBossFront(function () {
+
+            // 矫正玩家方向。
+            _this.hreo.turnTo(DIRECTION.UP);
+
+            // 然后出现boss。
+            _this.boss = new TankerBoss(2, (_this.level + 1), 380, _this);
+
+            // 当boss被打死后此方法执行。
+            _this.boss.setOnRunAway(function () {
+                _this.level += 1;
+                _this.shotCount = 0; // 击打的敌机个数，每个关卡都会从0开始
+                _this.launch.screen.setLevel(_this.level);
+                _this.boss = undefined;
+
+                _this.bossMod = false;
+            });
+
+        })
+    }
+
+    /**
+     * boss 被打中一次此方法调用一次，所以此方法并不是方法名那样boss被杀了，而是boss挨了一颗子弹。
+     */
+    Tank.prototype.onBossKill = function () {
+        this.boss.hpDown();
+
+        if (this.boss.getHp() <= 0) {
+            // boss 没血了。
+            this.boss.runAway(); //
+        }
     };
 
     /**
@@ -856,7 +1108,7 @@
     function initForNewGame() {
 
         this.level = 0;
-
+        this.shotCount = 0; // 击打的敌机个数，每个关卡都会从0开始
         this.score = 0;
 
         // 初始化有3条命。同时正好使用这个来渲染右侧的小点阵，来表示用户还有几条命。
@@ -907,7 +1159,13 @@
             this.lifes[i] = [0,0,0,0];
         }
 
-        return new Tanker(9, 4, ROLE.HERO, DIRECTION.UP, this);
+        var r = 9, c = 4;
+        if (this.bossMod) {
+            r = this.launch.screen.option.atomRowCount - 3;
+            c = 0;
+        }
+
+        return new Tanker(r, c, ROLE.HERO, DIRECTION.UP, this);
     }
 
     /**

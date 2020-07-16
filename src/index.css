@@ -2,8 +2,14 @@ html,body {
     margin: 0;
     padding: 0;
     height: 100%;
-    background: #e3e6e7;
+    background: #adbab8;
 }
+
+.main {
+    padding-top: 50px;
+    min-width: 400px;
+}
+
 tr td {
     text-align: center;
 }
@@ -70,6 +76,13 @@ tr td {
     display: -webkit-flex;
 
     justify-content: center;
+    -webkit-justify-content: center;
+
+    flex-wrap: wrap;
+    -webkit-flex-wrap: wrap;
+
+    align-items: flex-start;
+    -webkit-align-items: flex-start;
 }
 
 
@@ -78,6 +91,7 @@ tr td {
     width: 430px;
 
     border-radius: 45px;
+    margin-bottom: 20px;
 
     box-shadow:
             30px 40px 40px rgba(0, 0, 0, 0.8),
@@ -88,9 +102,10 @@ tr td {
     text-align: center;
     padding: 70px 0;
 }
+.game .game-head .leftdoc {margin-right: 15px;}
+.game .game-head .rightdoc {margin-left: 15px;}
 .game .game-head .leftdoc, .game .game-head .rightdoc {
     display: inline-block;
-    margin: 0 15px;
 }
 .game .game-head .leftdoc img, .game .game-head .rightdoc img{
     height: 320px;
@@ -146,16 +161,36 @@ tr td {
 
 .right {
     margin-left: 20px;
+    font-size: 95.7%;
 }
 
 .right .txt-borad {
     overflow: hidden;
-    width: 240px;
+    width: 300px;
     background: #019CD6;
-    padding: 8px 25px 30px 25px;
+    padding: 8px 0 30px 0;
     border-radius: 45px;
     color: white;
 
     box-shadow: 10px 20px 30px rgba(0, 0, 0, 0.8);
 
+}
+
+.right .txt-borad p {
+    margin: 0 20px;
+}
+
+@media screen and (max-width: 420px) {
+    .main {
+        width: 100%;
+        padding-top: 0;
+    }
+
+    .right {
+        width: 100%;
+        margin-left: 0;
+    }
+    .right .txt-borad {
+        width: 100%;
+    }
 }
