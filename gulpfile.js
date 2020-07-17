@@ -4,7 +4,7 @@ const header    = require('gulp-header');
 const uglify    = require('gulp-uglify');
 const pkg       = require('./package.json');
 
-let note = ["/* <%=name%> v<%=version%> by <%= author %>,doc:<%= url %> */\n", pkg];
+let note = ["/* <%=name%> v<%=version%> by <%= author %>,web:<%= url %> */\n", pkg];
 
 gulp.task("makejs", function () {
     let js = ['src/*.js'];
