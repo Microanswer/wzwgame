@@ -23,7 +23,7 @@
             best:  "Best",
             level: "Level",
             pause: "PAUSE",
-            fps:   "Fps"
+            fps:   "FPS"
         }
     }
 
@@ -85,7 +85,7 @@
     /**
      * 执行指定动画，这些动画需要时来自: WzwScreen.ANIM 里面的。
      * @param anim 某个动画
-     * @param cb 当动画里的每一组动画执行到完成时的回调。
+     * @param cb 当动画里的每一组动画执行到完成时的回调。回调传入 动画名字、动画序号， 如果序号为 -1 则表示动画被中断
      */
     WzwScreen.prototype.playAnim = function (anim, cb) {
         if (!anim) {
@@ -95,14 +95,15 @@
         var _this = this;
         var animResult = anim.call(_this);
 
-        // 生成动画数组
-        _this.animArr = _this.makeNewArr();
 
         // 做一个简单的验证，必须时间配置和动画组个数相同。
         if (animResult.animArr.length !== animResult.animTime.length) {
             throw new Error("时间配置与动画不匹配。");
         }
 
+        // 生成动画数组
+        _this.animArr = _this.makeNewArr();
+        _this.animResult = animResult;
         applyAnim.call(_this, animResult, 0, cb);
     };
 
@@ -215,10 +216,17 @@
         var _this = this;
         var _fps = 0;
 
-        setInterval(function () {
+        var fpsi=-1;
+        function fpsUpdate() {
             _this.fps = _fps;
             _fps = 0;
-        }, 1000);
+            if (fpsi !== -1) {
+                clearTimeout(fpsi);
+            }
+            fpsi = setTimeout(fpsUpdate, 1000);
+        }
+        fpsUpdate();
+
         (function loop () {
             _fps += 1;
             logicUpdate.call(_this);
@@ -388,7 +396,6 @@
     }
 
     function applyRender(ctx) {
-        this.viewCanvas.clearRect(0, 0,  this.option.width, this.option.height);
         this.viewCanvas.drawImage(this.innerCanvasDom, 0, 0);
     }
 
@@ -406,6 +413,12 @@
                 var fram = animGroup[index];
                 if (!fram) {return;}
 
+                // 在执行这个动画时发现动画本体被替换成了别的，那一定时这个动画还没完成，就在执行另一个动画了。
+                // 这里直接将这个动画终止。
+                if (_this.animResult !== animResult) {
+                    return "kill";
+                }
+
                 _this.animArr = fram;
             }
 
@@ -420,6 +433,10 @@
 
                     // 本组动画完成，继续下一组。
                     applyAnim.call(_this, animResult, animIndex + 1, cb);
+                },
+                // 被终止时执行。
+                kill: function () {
+                    cb && cb(animResult.animName, -1);
                 }
             }, animTime);
         } else {
@@ -522,7 +539,12 @@
                 var result2 = startY + Math.floor(detal2 * distanceY);
 
                 if (!ended) {
-                    back && back.goo && back.goo(result2);
+                    var result = back && back.goo && back.goo(result2);
+                    if ("kill" === result) {
+                        // 中段滚动。
+                        back.kill && back.kill();
+                        return;
+                    }
                 }
                 if (time <= timestamp) {
                     ended = true;

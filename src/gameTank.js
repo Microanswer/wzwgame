@@ -1050,6 +1050,7 @@
     Tank.prototype.onKeyDown = function (key) {
         if (!this.hreo) {return;}
         if (this.autoMoving) {return;} // 打boss前有个自动向boss对面移动的过程，此过程不允许被干预。
+        if (this.status === GAME_STATUS.PAUSED) {return;} // 暂停了
 
         if (key === "up") {
             if (this.bossMod) return;

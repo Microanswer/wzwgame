@@ -87,6 +87,14 @@
                         _this.starting = false;
                     } else if (index === 1) {
                         _this.currentGame.onLaunch();
+                    } else if (index === -1) {
+                        // 动画被终止。
+                        if (_this.currentGame) {
+                            _this.status = WzwLauncher.STATUS.GAMEING;
+                        } else {
+                            _this.status = WzwLauncher.STATUS.BOOTED;
+                        }
+                        _this.starting = false;
                     }
                 });
             }
