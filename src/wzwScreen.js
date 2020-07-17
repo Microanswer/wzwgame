@@ -177,17 +177,18 @@
         canvasDom.style.margin     = "0";
         canvasDom.style.padding    = "0";
         canvasDom.style.background = this.option.background;
-        this.dom.appendChild(canvasDom);
+        // this.dom.appendChild(canvasDom);
         this.canvasDom = canvasDom;
 
-        var innerCanvasDom = document.createElement("canvas");
-        innerCanvasDom.width            = innerCanvasDom.style.width  = this.option.width;
-        innerCanvasDom.height           = innerCanvasDom.style.height = this.option.height;
-        innerCanvasDom.style.background = this.option.background;
-        this.innerCanvasDom = innerCanvasDom;
+        // var innerCanvasDom = document.createElement("canvas");
+        // innerCanvasDom.width            = innerCanvasDom.style.width  = this.option.width;
+        // innerCanvasDom.height           = innerCanvasDom.style.height = this.option.height;
+        // innerCanvasDom.style.background = this.option.background;
+        // this.innerCanvasDom = innerCanvasDom;
+        this.dom.appendChild(canvasDom);
 
-        this.canvas     = this.innerCanvasDom.getContext("2d");
-        this.viewCanvas = this.canvasDom.getContext("2d");
+        this.canvas     = this.canvasDom.getContext("2d");
+        // this.viewCanvas = this.canvasDom.getContext("2d");
     }
 
     // 初始化绘制参数。
@@ -229,9 +230,14 @@
 
         (function loop () {
             _fps += 1;
+            // var t = Date.now();
             logicUpdate.call(_this);
+             // var t2 = Date.now();
             onRender.call(_this, _this.canvas);
-            applyRender.call(_this, _this.canvas);
+            // var t3 = Date.now();
+            // applyRender.call(_this, _this.canvas);
+            // console.log("耗时:" + (t2 - t) + ", " + (t3 - t2) + ", " + (Date.now() - t3));
+
             if (window.requestAnimationFrame) {
                 window.requestAnimationFrame(loop);
             } else if (window.webkitRequestAnimationFrame) {
@@ -245,6 +251,7 @@
     // 绘制实现方法。
     function onRender(ctx) {
         ctx.clearRect(0, 0,  this.option.width, this.option.height);
+        ctx.save();
 
         // 绘制背景
         var ofs = ctx.fillStyle;
@@ -268,6 +275,8 @@
 
         // 绘制游戏状态区 - 右边。
         renderBoard.call(this, ctx);
+
+        ctx.restore();
     }
 
     // 绘制点阵区域
@@ -395,9 +404,10 @@
         ctx.lineWidth   = olw;
     }
 
-    function applyRender(ctx) {
-        this.viewCanvas.drawImage(this.innerCanvasDom, 0, 0);
-    }
+    // function applyRender(ctx) {
+    //     this.viewCanvas.clearRect(0, 0,  this.option.width, this.option.height);
+    //     this.viewCanvas.drawImage(this.innerCanvasDom, 0, 0);
+    // }
 
     // 执行动画组,这是一个递归方法
     function applyAnim(animResult, animIndex, cb) {
