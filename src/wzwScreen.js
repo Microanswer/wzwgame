@@ -216,7 +216,7 @@
     function render () {
         var _this = this;
         var _fps = 0;
-
+        var m = "";
         var fpsi=-1;
         function fpsUpdate() {
             _this.fps = _fps;
@@ -229,22 +229,27 @@
         fpsUpdate();
 
         (function loop () {
+            var t = Date.now();
             _fps += 1;
-            // var t = Date.now();
             logicUpdate.call(_this);
-             // var t2 = Date.now();
+             var t2 = Date.now();
             onRender.call(_this, _this.canvas);
-            // var t3 = Date.now();
+            var t3 = Date.now();
             // applyRender.call(_this, _this.canvas);
-            // console.log("耗时:" + (t2 - t) + ", " + (t3 - t2) + ", " + (Date.now() - t3));
 
             if (window.requestAnimationFrame) {
+                m = "requestAnimationFrame";
                 window.requestAnimationFrame(loop);
             } else if (window.webkitRequestAnimationFrame) {
+                m = "webkitRequestAnimationFrame";
                 window.webkitRequestAnimationFrame(loop);
             } else {
+                m = "setTimeout";
                 setTimeout(loop, 16);
             }
+            var t4 = Date.now();
+            if (window.testspan) {window.testspan.innerText = ("逻辑耗时：" + (t2 - t) + ", 绘制耗时：" + (t3 - t2) + ", 帧请求(" +m+ ")耗时：" + (t4 - t3) + ", 帧间隔:"+(t -_this.lastttime));}
+            _this.lastttime = Date.now();
         })();
     }
 
