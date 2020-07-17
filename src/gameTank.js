@@ -3,15 +3,16 @@
     var WzwScreen = window.WzwScreen;
     var WzwBomb   = window.WzwBomb;
 
-    var BALLMAXCOUNT = 3;
+    // 一个坦克同时最多发出这么多个子弹
+    var BALLMAXCOUNT = 2;
 
     // 各个等级下的更新速度，坦克(敌方)的运动速度
-    var LEVELS = [550, 500, 450, 400, 350, 300, 250, 200, 150, 130, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 5];
+    var LEVELS = [550, 540, 530, 520, 500, 490, 480, 470, 450, 430, 410, 400, 380, 350, 340, 330, 300, 280, 260, 240, 200];
 
     // 指定关卡需要射击多少个坦克才可以提升关卡。
     var SHOOT_LEVELS = {
-        '0':  2,
-        '1':  3,
+        '0':  15,
+        '1':  20,
         '2':  25,
         '3':  32,
         '4':  40,
@@ -90,7 +91,7 @@
         this.direction = this.tanker.direction;
 
         // 子弹的移动间隔时间。
-        this.time = 20;
+        this.time = 42;
 
         this.available = true;
 
@@ -164,6 +165,9 @@
         }
     }
 
+    /**
+     * 检查此子弹是否打中某坦克。或打中坦克的子弹
+     */
     Ball.prototype.checkKilled = function () {
         var _this = this;
 
@@ -177,14 +181,23 @@
                     }
                 })
 
-                if (_this.tanker.tank.boss.isAtomIn(_this.offsetRow, _this.offsetCol)) {
-                    throw {message: "killed", index: 0, tanker: _this.tanker.tank.boss};
+                // 玩家的子弹是否打中boss
+                if (_this.tanker.tank.boss && _this.tanker.tank.boss.isAtomIn(_this.offsetRow, _this.offsetCol)) {
+                    if (_this.tanker.tank.boss.isAtomInGun(_this.offsetRow, _this.offsetCol)) {
+                        throw {message: "killed", index: 0, tanker: _this.tanker.tank.boss};
+                    }
+                    throw {message: "hited", index: 0};
                 }
 
             } else if (_this.tanker.role === ROLE.FOE) {
-                // 敌人的子弹
-                if (_this.tanker.tank.hreo.isAtomIn(_this.offsetRow, _this.offsetCol)) {
+                // 敌人的子弹是否打中玩家/
+                if (_this.tanker.tank.hreo && _this.tanker.tank.hreo.isAtomIn(_this.offsetRow, _this.offsetCol)) {
                     throw {message: "killed", index: 0, tanker: _this.tanker.tank.hreo};
+                }
+
+                // 敌人的子弹是否打中玩家的子弹 - 不需要判断玩家的子弹是否打中敌人的子弹，因为2个子弹相遇会同时消失。所以只有这里有对子弹的判断。
+                if (_this.tanker.tank.hreo && _this.tanker.tank.hreo.isAtomInAtom(_this.offsetRow, _this.offsetCol)) {
+                    throw {message: "hited", index: 0};
                 }
             }
         }catch (e) {
@@ -200,9 +213,12 @@
                         _this.tanker.tank.onEofKill();
                     }
                 } else if (e.tanker.role === ROLE.HERO) {
-                    // 玩家被杀。。。有可能同时多个子弹打中玩家，只需要让一个子弹的生效就好了。
-                    if (_this.tanker.tank.status === GAME_STATUS.NORMAL) {
-                        _this.tanker.tank.onHeroKill();
+                    if (_this.available) {
+
+                        // 玩家被杀。。。有可能同时多个子弹打中玩家，只需要让一个子弹的生效就好了。
+                        if (_this.tanker.tank.status === GAME_STATUS.NORMAL) {
+                            _this.tanker.tank.onHeroKill();
+                        }
                     }
                 }
 
@@ -211,6 +227,16 @@
                 if (_this.onUnAvailable) {
                     _this.onUnAvailable(_this);
                 }
+            } else if (e.message === "hited") {
+                // 只是打到了，但是没有形成伤害的攻击，比如说打到了boss的身体，就是这种。
+                // 子弹打到了别人的子弹，也是这种。情况。
+                // 然后让子弹消失。
+                _this.available = false;
+                if (_this.onUnAvailable) {
+                    _this.onUnAvailable(_this);
+                }
+            } else {
+                console.warn("异常：", e);
             }
         }
     }
@@ -544,6 +570,28 @@
     }
 
     /**
+     * 检查某点位是否在此坦克发射的子弹同位置。
+     * @param row
+     * @param col
+     */
+    Tanker.prototype.isAtomInAtom = function(row, col) {
+        for (var i = 0; i < this.balls.length; i++) {
+            var b = this.balls[i];
+            if (!b.available) {
+                continue;
+            }
+            if (b.offsetRow === row && b.offsetCol === col) {
+                b.available = false;
+                if (b.onUnAvailable) {
+                    b.onUnAvailable(b);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * 获取一个和当前坦克方向不一样的其它方向。
      */
     Tanker.prototype.getDiffDirection = function () {
@@ -688,6 +736,31 @@
     // 设置boss被打逃跑后的回调。
     TankerBoss.prototype.setOnRunAway = function (fun) {
         this.onRunAwayFun = fun;
+    }
+
+    // 判断某点位是否在boss的枪管位置里，在这个位置里认为是打到了boss。
+    TankerBoss.prototype.isAtomInGun = function (row, col) {
+        if (this.status !== TankerBoss.STATUS.SHOWED) {
+            // 还没有完全出场，boss就算中弹也没事。
+            return false;
+        }
+
+        if (row === (this.offsetRow + 6)) {
+            if ((this.offsetCol + 3) === col) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 判断某点位是否在boss的身体部分，如果在，返回true，应该让此子弹消失。
+    TankerBoss.prototype.isAtomIn = function (row, col) {
+        if (this.offsetRow <= row && row <= (this.offsetRow + 6)) {
+            if (this.offsetCol <= col && col <= (this.offsetCol + 6)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     TankerBoss.STATUS = {
@@ -976,6 +1049,7 @@
     // 【事件函数】当某按键按下时调用
     Tank.prototype.onKeyDown = function (key) {
         if (!this.hreo) {return;}
+        if (this.autoMoving) {return;} // 打boss前有个自动向boss对面移动的过程，此过程不允许被干预。
 
         if (key === "up") {
             if (this.bossMod) return;
@@ -992,18 +1066,17 @@
         }
     };
 
-    // 使玩家坦克自动跑到打boss的对面，也就是最下面的中间。
-    Tank.prototype.gotoBossFront = function (cb/*到达目的地时回调此方法*/) {
-        var target = [
-            this.launch.screen.option.atomRowCount - 3,
-            parseInt(((this.launch.screen.option.atomColCount - 1) / 2)-1),
-        ];
+    // 使玩家自动跑到某位在，默认跑到打boss的对面，也就是最下面的中间。
+    Tank.prototype.goto = function (target, cb/*到达目的地时回调此方法*/) {
         var dely = 100;
 
         var _this = this;
+
+        _this.autoMoving = true;
+
         function move() {
             if (_this.hreo.offsetCol !== target[1]) {
-                console.log("col");
+                // console.log("col");
                 if (_this.hreo.offsetCol < target[1]) {
                     _this.hreo.moveToRight(1);
                     setTimeout(move, dely);
@@ -1014,15 +1087,23 @@
                     return;
                 }
             } else if (_this.hreo.offsetRow !== target[0]) {
-                console.log("row");
-                _this.hreo.moveToBottom(1);
-                setTimeout(move, dely);
+                // console.log("row");
+                if (_this.hreo.offsetRow < target[0]) {
+                    _this.hreo.moveToBottom(1);
+                    setTimeout(move, dely);
+                    return;
+                } else if (_this.hreo.offsetRow > target[0]) {
+                    _this.hreo.moveToUp(1);
+                    setTimeout(move, dely);
+                    return;
+                }
             } else {
-                console.log("end");
+                // console.log("end");
                 cb && cb.call(_this);
+                _this.autoMoving = false;
             }
         }
-        setTimeout(move, dely);
+        setTimeout(move, dely * 2);
     };
 
     /**
@@ -1052,13 +1133,16 @@
         _this.tankers = [];
 
         // 然后去到界面底部。
-        _this.gotoBossFront(function () {
+        _this.goto([
+            this.launch.screen.option.atomRowCount - 3,
+            parseInt(((this.launch.screen.option.atomColCount - 1) / 2)-1),
+        ], function () {
 
             // 矫正玩家方向。
             _this.hreo.turnTo(DIRECTION.UP);
 
             // 然后出现boss。
-            _this.boss = new TankerBoss(2, (_this.level + 1), 380, _this);
+            _this.boss = new TankerBoss(2, (_this.level + 3), 460, _this);
 
             // 当boss被打死后此方法执行。
             _this.boss.setOnRunAway(function () {
@@ -1067,7 +1151,14 @@
                 _this.launch.screen.setLevel(_this.level);
                 _this.boss = undefined;
 
-                _this.bossMod = false;
+                // boss跑了后，自动将玩家坦克移动到屏幕中间。
+                _this.goto([
+                    parseInt(((this.launch.screen.option.atomRowCount - 1) / 2)-1),
+                    parseInt(((this.launch.screen.option.atomColCount - 1) / 2)-1),
+                ], function () {
+                    _this.bossMod = false;
+                });
+
             });
 
         })
@@ -1199,7 +1290,7 @@
      * 传入现有的敌方坦克和玩家坦克，以确定它们是否占据了即将要产生的新坦克的位置。
      */
     function findEOFAvailablePosition (tankers, hero) {
-        let result = [];
+        var resul_t = [];
 
         // 判断上左
         var topLeftJudgeArr = this.topLeftJudgeArr = this.topLeftJudgeArr || [
@@ -1211,7 +1302,7 @@
         ];
 
         if (!judgeArrHasTanker(topLeftJudgeArr, tankers, hero)) {
-            result.push('top_left');
+            resul_t.push('top_left');
         }
 
         // 判断上右
@@ -1223,7 +1314,7 @@
             [2, this.launch.screen.option.atomColCount - 1],
         ];
         if (!judgeArrHasTanker(topRightJudgeArr, tankers, hero)) {
-            result.push('top_right');
+            resul_t.push('top_right');
         }
 
         // 判断下左
@@ -1235,7 +1326,7 @@
             [this.launch.screen.option.atomRowCount - 3, 0],
         ];
         if (!judgeArrHasTanker(bottomLeftJudgeArr, tankers, hero)) {
-            result.push('bottom_left');
+            resul_t.push('bottom_left');
         }
 
         // 判断下右
@@ -1247,10 +1338,10 @@
             [this.launch.screen.option.atomRowCount - 3, this.launch.screen.option.atomColCount - 1],
         ];
         if (!judgeArrHasTanker(bottomRightJudgeArr, tankers, hero)) {
-            result.push('bottom_right');
+            resul_t.push('bottom_right');
         }
 
-        return result;
+        return resul_t;
     }
 
     function judgeArrHasTanker (judgeArr, tankers, hero) {

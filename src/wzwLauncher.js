@@ -25,13 +25,13 @@
         // 注册逻辑方法。
         this.screen.regLogic(logicUpdate.bind(this));
 
+        // 文字缓存。
         this.letterCache = {};
 
-
+        // 当前游戏位置
         this.current = 0;
 
-        // 楷鸡
-        this.reboot();
+        this.status = WzwLauncher.STATUS.OFFED;
     }
 
     /**
@@ -76,11 +76,11 @@
             return; // 正在开始某个游戏，动画进行中，不响应其它的start调用。
         }
 
-        if (_this.booted && _this.games.length > 0) {
+        if (_this.status === WzwLauncher.STATUS.BOOTED && _this.games.length > 0) {
 
             // 在没有进行任何游戏的状态才进行游戏开始的调用。
             if (!_this.currentGame) {
-
+                _this.status = WzwLauncher.STATUS.GAMEING;
                 _this.screen.playAnim(WzwScreen.ANIM.COP, function (animName, index) {
                     if (index === 0) {
                         _this.currentGame = _this.games[_this.current].game;
@@ -98,6 +98,7 @@
      */
     WzwLauncher.prototype.exitCurentGame = function () {
         var _this = this;
+        _this.status = WzwLauncher.STATUS.BOOTED;
         _this.currentGame = undefined;
     }
 
@@ -107,35 +108,29 @@
     WzwLauncher.prototype.reboot = function () {
         // 播放开机动画
         var _this = this;
-        _this.offed = false;
-        _this.booting = true;
-        _this.booted = false;
-        _this.bootingHalf = false;
+        _this.status = WzwLauncher.STATUS.BOOTING;
         _this.screen.playAnim(WzwScreen.ANIM.CIRCLE, function (animName, index) {
             if (index === 0) {
-                _this.bootingHalf = true;
+                _this.status = WzwLauncher.STATUS.BOOTINGHALF;
                 // 此时动画跑满屏了。
                 if(_this.currentGame) {
                     _this.currentGame.onDestroy && _this.currentGame.onDestroy();
                 }
                 _this.currentGame = null; // 清除当前正在玩的游戏。
             } else if (index === 1) {
-                _this.booting = false;
-                _this.bootingHalf = false;
-                _this.booted = true;
+                _this.status = WzwLauncher.STATUS.BOOTED;
             }
         });
     }
 
     WzwLauncher.prototype.turnOff = function() {
         var _this    = this;
-        this.booted  = false;
-        this.booting = true;
-        this.screen.playAnim(WzwScreen.ANIM.T2B, function (animName, index) {
+        _this.status = WzwLauncher.STATUS.OFFING;
+        _this.screen.playAnim(WzwScreen.ANIM.T2B, function (animName, index) {
             if (index === 0) {
-                _this.offed = true;
+                _this.status = WzwLauncher.STATUS.OFFINGHALF;
             } else if (index === 1) {
-                _this.booting = false;
+                _this.status = WzwLauncher.STATUS.OFFED;
                 _this.current = 0;
                 _this.currentGame = null;
             }
@@ -157,7 +152,11 @@
     function onKeyDown(key) {
 
         // 还没开机
-        if (!this.booted || this.offed) {
+        if (this.status === WzwLauncher.STATUS.OFFED) {
+            return;
+        }
+        // 关机了
+        if (this.status === WzwLauncher.STATUS.OFFINGHALF) {
             return;
         }
 
@@ -175,8 +174,8 @@
      * @param key
      */
     function onKeyUp(key) {
-        // 还没开机
-        if (!this.booted || this.offed) {
+        // 关机状态按开关
+        if (this.status === WzwLauncher.STATUS.OFFED) {
             if ("onoff" === key) {
                 // 按了开机按钮，进行开机。
                 this.reboot();
@@ -184,57 +183,66 @@
             return;
         }
 
-        // 关机
-        if ("onoff" === key) {
-            this.turnOff();
-            return;
-        }
+        // 开启状态
+        if (
+            this.status === WzwLauncher.STATUS.BOOTED ||
+            this.status === WzwLauncher.STATUS.GAMEING
+        ) {
 
-        // 没有注册任何游戏
-        if (!this.games || this.games.length < 1) {
-            return;
-        }
-
-        // 当前在运行游戏。
-        if (this.currentGame) {
-            this.currentGame.onKeyup && this.currentGame.onKeyup(key);
-        } else {
-            if ("rotate" === key) {
-                // 没开始游戏时，就使用此按钮进行多个游戏间的切换。
-                if (this.current >= this.games.length - 1) {
-                    this.current = 0;
-                } else {
-                    this.current ++;
-                }
-                return;
-            } else if ("start" === key) {
-                this.start();
+            // 进行关机
+            if ("onoff" === key) {
+                this.turnOff();
                 return;
             }
-        }
 
-        if ("reset" === key) {
-            this.reboot();
-            return;
-        }
 
+            // 没有注册任何游戏
+            if (!this.games || this.games.length < 1) {
+                return;
+            }
+
+            // 当前在运行游戏。
+            if (this.currentGame) {
+                this.currentGame.onKeyup && this.currentGame.onKeyup(key);
+            } else {
+                if ("rotate" === key) {
+                    // 没开始游戏时，就使用此按钮进行多个游戏间的切换。
+                    if (this.current >= this.games.length - 1) {
+                        this.current = 0;
+                    } else {
+                        this.current ++;
+                    }
+                    return;
+                } else if ("start" === key) {
+                    this.start();
+                    return;
+                }
+            }
+
+            if ("reset" === key) {
+                this.reboot();
+                return;
+            }
+
+        }
     }
 
 
     function logicUpdate () {
 
         // 已关机。
-        if (this.offed) {
+        if (this.status === WzwLauncher.STATUS.OFFED || this.status === WzwLauncher.STATUS.OFFINGHALF) {
             this.screen.updateAtomArr(null);
             this.screen.updateStatusAtoms(null);
             this.screen.setScore(0);
             this.screen.setLevel(0);
             this.screen.setBest(0);
+            this.screen.setPause(false)
             return;
         }
 
-        // 还没开机，什么都不做，直接返回。
-        if (this.booting && !this.bootingHalf) {
+        // 正在开机
+        if (this.status === WzwLauncher.STATUS.BOOTING) {
             return;
         }
 
@@ -256,8 +264,6 @@
             this.atoms = getPreviewAtoms.call(this);
             this.statusAtoms = undefined;
         }
-
-
 
         this.screen.updateAtomArr(this.atoms);
         this.screen.updateStatusAtoms(this.statusAtoms);
@@ -314,6 +320,16 @@
         WzwScreen.mergeArr(game.game.getPreviewAtoms(), preAtoms, flag + 1, 0);
 
         return preAtoms;
+    }
+
+    WzwLauncher.STATUS = {
+        BOOTING:     2, // 开机中。
+        BOOTINGHALF: 3, // 开机中 - 开机一半 （开机动画铺满屏幕）。
+        BOOTED:      4, // 开机完成。
+        GAMEING:     5, // 正在玩某个游戏。
+        OFFING:      6, // 关机中。
+        OFFINGHALF:  7, // 关机中 - 关机一般 （关机动画铺满屏幕）。
+        OFFED:       8, // 已关机。
     }
 
     window.WzwLauncher = WzwLauncher;

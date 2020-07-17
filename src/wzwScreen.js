@@ -213,7 +213,6 @@
     // 绘制方法。
     function render () {
         var _this = this;
-        var ctx = _this.canvas;
         var _fps = 0;
 
         setInterval(function () {
@@ -223,8 +222,8 @@
         (function loop () {
             _fps += 1;
             logicUpdate.call(_this);
-            onRender.call(_this, ctx);
-            applyRender.call(_this, ctx);
+            onRender.call(_this, _this.canvas);
+            applyRender.call(_this, _this.canvas);
             if (window.requestAnimationFrame) {
                 window.requestAnimationFrame(loop);
             } else if (window.webkitRequestAnimationFrame) {
@@ -389,6 +388,7 @@
     }
 
     function applyRender(ctx) {
+        this.viewCanvas.clearRect(0, 0,  this.option.width, this.option.height);
         this.viewCanvas.drawImage(this.innerCanvasDom, 0, 0);
     }
 
