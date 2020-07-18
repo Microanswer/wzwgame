@@ -5,7 +5,7 @@
   "main": "index.js",
   "url": "http://test.microanswer.cn/wzwgame/index.html",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node staticServer.js"
   },
   "keywords": [
     "Microanswer",
@@ -17,6 +17,7 @@
     "gulp": "^4.0.2",
     "gulp-header": "^2.0.9",
     "gulp-replace": "^1.0.0",
-    "gulp-uglify": "^3.0.2"
+    "gulp-uglify": "^3.0.2",
+    "static-server": "^2.2.1"
   }
 }
