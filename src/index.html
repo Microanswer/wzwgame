@@ -10,8 +10,9 @@
     <script src="Clicker.js"></script>
     <script src="wzwScreen.js"></script>
     <script src="wzwLauncher.js"></script>
-    <script src="gameTetris.js"></script>
     <script src="gameTank.js"></script>
+    <script src="gameTetris.js"></script>
+    <script src="gameSnake.js"></script>
 </head>
 <body>
 <div class="main flex-page">
@@ -186,8 +187,9 @@
 </div>
 <script>
     var launch = new WzwLauncher("#screen");
-    launch.regGame("A", new Tetris());
-    launch.regGame("B", new Tank());
+    launch.regGame("A", new Tank());
+    launch.regGame("B", new Tetris());
+    launch.regGame("C", new Snake());
 
     var clickers = {};
 
