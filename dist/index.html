@@ -10,8 +10,9 @@
     <script src="Clicker.js"></script>
     <script src="wzwScreen.js"></script>
     <script src="wzwLauncher.js"></script>
-    <script src="gameTetris.js"></script>
     <script src="gameTank.js"></script>
+    <script src="gameTetris.js"></script>
+    <script src="gameSnake.js"></script>
 </head>
 <body>
 <div class="main flex-page">
@@ -186,8 +187,9 @@
 </div>
 <script>
     var launch = new WzwLauncher("#screen");
-    launch.regGame("A", new Tetris());
-    launch.regGame("B", new Tank());
+    launch.regGame("A", new Tank());
+    launch.regGame("B", new Tetris());
+    launch.regGame("C", new Snake());
 
     var clickers = {};
 
@@ -252,11 +254,23 @@
         var f = keyUpMap[String(event.key).toLowerCase()];
         f && f();
         event.stopPropagation();
+        if(event.preventDefault){
+            event.preventDefault();
+        }else{
+            event.returnValue = false;
+            window.event.returnValue = false;
+        }
     }
     window.onkeydown = function (event) {
         var f = keyDownMap[String(event.key).toLowerCase()];
         f && f();
         event.stopPropagation();
+        if(event.preventDefault){
+            event.preventDefault();
+        }else{
+            event.returnValue = false;
+            window.event.returnValue = false;
+        }
     }
 
     // 监听界面按钮
@@ -272,8 +286,25 @@
     }
     var btns = document.querySelectorAll("button.btn[id]");
     for (var i = 0; i < btns.length; i++) {
-        btns[i].addEventListener(downevent,  function (e) {onKeyDown(this.id); e.stopPropagation();});
-        btns[i].addEventListener(upevent,    function (e) {onKeyUp(this.id); e.stopPropagation();});
+        btns[i].addEventListener(downevent,  function (e) {
+            onKeyDown(this.id);
+            e.stopPropagation();
+            if(e.preventDefault){
+                e.preventDefault();
+            }else{
+                e.returnValue = false;
+                window.event.returnValue = false;
+            }
+        });
+        btns[i].addEventListener(upevent,    function (e) {
+            onKeyUp(this.id); e.stopPropagation();
+            if(e.preventDefault){
+                e.preventDefault();
+            }else{
+                e.returnValue = false;
+                window.event.returnValue = false;
+            }
+        });
     }
 
     setTimeout(function () {
