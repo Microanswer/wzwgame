@@ -217,16 +217,10 @@
         var _this = this;
         var _fps = 0;
         var m = "";
-        var fpsi=-1;
-        function fpsUpdate() {
+        setTimeout(function fpsUpdate() {
             _this.fps = _fps;
             _fps = 0;
-            if (fpsi !== -1) {
-                clearTimeout(fpsi);
-            }
-            fpsi = setTimeout(fpsUpdate, 1000);
-        }
-        fpsUpdate();
+        }, 1000);
 
         (function loop () {
             var t = Date.now();
@@ -248,7 +242,7 @@
                 setTimeout(loop, 16);
             }
             var t4 = Date.now();
-            if (window.testspan) {window.testspan.innerText = ("逻辑耗时：" + (t2 - t) + ", 绘制耗时：" + (t3 - t2) + ", 帧请求(" +m+ ")耗时：" + (t4 - t3) + ", 帧间隔:"+(t -_this.lastttime));}
+            if (window.testspan) {window.testspan.innerText = ("逻辑耗时：" + (t2 - t) + "ms, 绘制耗时：" + (t3 - t2) + "ms, 帧请求(" +m+ ")耗时：" + (t4 - t3) + "ms, 帧间隔:"+(t -_this.lastttime) + "ms");}
             _this.lastttime = Date.now();
         })();
     }
@@ -257,6 +251,7 @@
     function onRender(ctx) {
         ctx.clearRect(0, 0,  this.option.width, this.option.height);
         ctx.save();
+        ctx.beginPath();
 
         // 绘制背景
         var ofs = ctx.fillStyle;
@@ -281,6 +276,7 @@
         // 绘制游戏状态区 - 右边。
         renderBoard.call(this, ctx);
 
+        ctx.closePath();
         ctx.restore();
     }
 
@@ -329,16 +325,15 @@
 
     // 绘制某一个点阵，需要 像素级别的两个offset值。
     function renderAtom(ctx, val, offsetRow, offsetCol) {
-        var _this = this;
-        ctx.strokeStyle = ctx.fillStyle = val > 0 ? _this.option.color1 : _this.option.color2;
-        ctx.lineWidth = _this.option.atomBorder;
+        ctx.strokeStyle = ctx.fillStyle = val > 0 ? this.option.color1 : this.option.color2;
+        ctx.lineWidth = this.option.atomBorder;
 
-        ctx.strokeRect(offsetCol, offsetRow, _this.drawParam.atomWidth, _this.drawParam.atomHeight);
+        ctx.strokeRect(offsetCol, offsetRow, this.drawParam.atomWidth, this.drawParam.atomHeight);
         ctx.fillRect(
-            offsetCol + _this.option.atomInset,
-            offsetRow + _this.option.atomInset,
-            _this.drawParam.atomWidth  - (_this.option.atomInset * 2),
-            _this.drawParam.atomHeight - (_this.option.atomInset * 2)
+            offsetCol + this.option.atomInset,
+            offsetRow + this.option.atomInset,
+            this.drawParam.atomWidth  - (this.option.atomInset * 2),
+            this.drawParam.atomHeight - (this.option.atomInset * 2)
         )
     }
 
@@ -645,6 +640,26 @@
      */
     WzwScreen.random = function(start, end) {
         return Math.floor((Math.random() * (end - start)) + start);
+    }
+
+    var storage = {
+        getItem: function (key) {console.warn("getItem不支持localstorage、sessionstorage")},
+        setItem: function (key,value) {console.warn("setItem不支持localstorage、sessionstorage")},
+        removeItem: function (key) {console.warn("removeItem不支持localstorage、sessionstorage")},
+    }
+
+    WzwScreen.storeGet = function (key) {
+        var v = (localStorage || sessionStorage || storage).getItem(key);
+        if (v) {
+            return JSON.parse(v);
+        }
+        return v;
+    }
+    WzwScreen.storeSet = function(key, value) {
+        return (localStorage || sessionStorage || storage).setItem(key, JSON.stringify(value));
+    }
+    WzwScreen.storeRemove = function (key) {
+        return (localStorage || sessionStorage || storage).removeItem(key);
     }
 
 

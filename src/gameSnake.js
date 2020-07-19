@@ -162,6 +162,9 @@
         this.paused = false;
 
         this.score = 0;
+
+        this.best = WzwScreen.storeGet('snakeBest') || 0;
+        this.launch.screen.setBest(this.best);
     };
 
     // 【生命周期函数】游戏过程中，此方法会不停的被调用。应当返回一个二维数组，此二维数组就会渲染到界面。
@@ -177,8 +180,14 @@
                 // 判断玩家吃到了食物。
                 if (this.food) {
                     if (this.snakeHead.isAtomsIn(this.food[0], this.food[1])) {
+
                         this.score += 1;
                         this.launch.screen.setScore(this.score);
+                        if (this.score >= this.best) {
+                            this.best = this.score;
+                            this.launch.screen.setBest(this.best);
+                            WzwScreen.storeSet("snakeBest", this.best);
+                        }
 
                         this.snakeHead.pushFood(this.food);
 
@@ -245,12 +254,16 @@
     // 【生命周期函数】游戏结束时调用。比如:玩着玩着用户按一下复位按钮，此时动画执行到满屏，会调用该函数，游戏应该清除自己的状态。
     Snake.prototype.onDestroy = function (){
         this.launch.screen.setScore(0);
+        this.launch.screen.setBest(0);
+        this.launch.screen.setPause(false);
+        this.launch.screen.setLevel(0);
         this.snakeHead = undefined;
-        this.bomb = undefined;
-        this.live = false;
-        this.turbo = false;
-        this.food = undefined;
-        this.paused = false;
+        this.bomb      = undefined;
+        this.live      = false;
+        this.turbo     = false;
+        this.food      = undefined;
+        this.paused    = false;
+        this.best      = 0;
         this.launch.exitCurentGame(); // 退出当前游戏
     };
 

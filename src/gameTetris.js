@@ -205,7 +205,7 @@
         // 初始化游戏预览。
         initPreview.call(this);
 
-        this.best = (localStorage || sessionStorage).getItem("tetrisBest") || 0;
+        this.best = WzwScreen.storeGet("tetrisBest") || 0;
     }
 
     // 当游戏实列被注册到launch时调用。
@@ -437,7 +437,7 @@
 
     function onNewBest(score) {
         this.best = score;
-        (localStorage || sessionStorage).setItem("tetrisBest", score);
+        WzwScreen.storeSet("tetrisBest", score);
         this.launch.screen.setBest(score);
     }
 

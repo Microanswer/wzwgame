@@ -11,7 +11,7 @@ gulp.task("makejs", function () {
 
     return gulp.src(js)
 
-        .pipe(replace(/\$\{[a-zA-Z]+\}/g, function (match) {
+        .pipe(replace(/\${[a-zA-Z]+}/g, function (match) {
             match = match.substr(
                 match.indexOf('{') + 1,
                 match.indexOf('}') - 2

@@ -1025,6 +1025,7 @@
         this.status  = GAME_STATUS.GAMEOVER;
         this.boss    = undefined;
         this.bossMod = false;
+        this.best    = 0;
 
         this.launch.screen.setBest(0);
         this.launch.screen.setScore(0);
@@ -1114,6 +1115,11 @@
         this.score += 1;
         this.shotCount += 1;
         this.launch.screen.setScore(this.score);
+        if (this.score >= this.best) {
+            this.best = this.score;
+            this.launch.screen.setBest(this.best);
+            WzwScreen.storeSet("tankBest", this.best);
+        }
 
         // 满足提升管卡要求？
         if (this.shotCount >= SHOOT_LEVELS[String(this.level)]) {
@@ -1202,6 +1208,8 @@
         this.level = 0;
         this.shotCount = 0; // 击打的敌机个数，每个关卡都会从0开始
         this.score = 0;
+        this.best = WzwScreen.storeGet('tankBest') || 0;
+        this.launch.screen.setBest(this.best);
 
         // 初始化有3条命。同时正好使用这个来渲染右侧的小点阵，来表示用户还有几条命。
         this.lifes = [[0,0,0,0]];
