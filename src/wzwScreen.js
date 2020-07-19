@@ -217,7 +217,7 @@
         var _this = this;
         var _fps = 0;
         var m = "";
-        setTimeout(function fpsUpdate() {
+        setInterval(function fpsUpdate() {
             _this.fps = _fps;
             _fps = 0;
         }, 1000);

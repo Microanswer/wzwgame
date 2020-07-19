@@ -20,8 +20,8 @@ tr td {
     background: linear-gradient(145deg, #decb02, #c1b002);
     transition-duration: 30ms;
 
-    width: 40px;
-    height: 40px;
+    width: 46px;
+    height: 46px;
     cursor: pointer;
     display-role: button;
 
@@ -30,8 +30,8 @@ tr td {
     -4px -4px 8px #7ed2d2;
 }
 .btn.small {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     margin: 0 6px;
 
     box-shadow:  3px 3px 6px #555555,
@@ -43,8 +43,8 @@ tr td {
     display: none;
 }
 .btn.big {
-    width: 70px;
-    height: 70px;
+    width: 73px;
+    height: 73px;
     box-shadow:  8px 8px 20px #555555,
     -8px -8px 20px #7ed2d2;
 }
