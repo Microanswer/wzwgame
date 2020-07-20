@@ -6,19 +6,13 @@
     <meta name="renderer" content="webkit">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>王中王游戏机</title>
-    <link rel="stylesheet" href="index.css">
-    <script src="Clicker.js"></script>
-    <script src="wzwScreen.js"></script>
-    <script src="wzwLauncher.js"></script>
-    <script src="gameTank.js"></script>
-    <script src="gameTetris.js"></script>
-    <script src="gameSnake.js"></script>
+    <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
 <div class="main flex-page">
     <div class="game">
         <div class="game-head">
-            <div class="leftdoc"><img src="left.png"/></div>
+            <div class="leftdoc"><img src="img/left.png"/></div>
             <div class="centerdoc">
                 <div id="screen"></div>
                 <div class="logo">
@@ -27,7 +21,7 @@
                     </div>
                 </div>
             </div>
-            <div class="rightdoc"><img src="right.png"/></div>
+            <div class="rightdoc"><img src="img/right.png"/></div>
         </div>
         <div class="game-body">
             <table>
@@ -179,139 +173,13 @@
     </div>
 </div>
 <div>
+    <% if (webpackConfig.mode === "production"){ %>
     <script type="text/javascript">
         var cnzz_protocol = (("https:" == document.location.protocol) ? "https://" : "http://");
         document.write(unescape("%3Cspan style='vertical-align:middle' id='cnzz_stat_icon_1263962182'%3E%3C/span%3E%3Cscript src='" + cnzz_protocol + "s22.cnzz.com/z_stat.php%3Fid%3D1263962182%26show%3Dpic1' type='text/javascript'%3E%3C/script%3E"));
     </script>
-    <span id="ddd"></span>
+    <% } %>
+    <small id="testspan"></small>
 </div>
-<script>
-    var launch = new WzwLauncher("#screen");
-    launch.regGame("A", new Tank());
-    launch.regGame("B", new Tetris());
-    launch.regGame("C", new Snake());
-
-    var clickers = {};
-
-    function onKeyUp(key)   {
-        launch.onKeyUp(key);
-        upKey(key);
-
-        var clicker = clickers[key];
-        if (clicker) {
-            clicker.release();
-        }
-    }
-    function onKeyDown(key) {
-        var clicker = clickers[key];
-        if (!clicker) {
-            clicker = clickers[key] = new Clicker();
-            clicker.onClick(function () {
-                launch.onKeyDown(key);
-                downKey(key);
-            });
-        }
-        clicker.push();
-    }
-
-    function upKey(key) {
-        var btn = document.querySelector("#" + key);
-        btn.className = btn.className.replace(/ active/g, "");
-    }
-    function downKey(key) {
-        var btn = document.querySelector("#" + key);
-        if (btn.className.indexOf("active") < 0) {
-            btn.className = btn.className + " active";
-        }
-    }
-
-    var keyUpMap = {
-        "w": function () {onKeyUp("up")    },
-        "a": function () {onKeyUp("left")  },
-        "s": function () {onKeyUp("down")  },
-        "d": function () {onKeyUp("right") },
-        " ": function () {onKeyUp("rotate")},
-        "z": function () {onKeyUp("start") },
-        "x": function () {onKeyUp("voice") },
-        "c": function () {onKeyUp("onoff") },
-        "v": function () {onKeyUp("reset") },
-    }
-
-    var keyDownMap = {
-        "w": function () {onKeyDown("up")    },
-        "a": function () {onKeyDown("left")  },
-        "s": function () {onKeyDown("down")  },
-        "d": function () {onKeyDown("right") },
-        " ": function () {onKeyDown("rotate")},
-        "z": function () {onKeyDown("start") },
-        "x": function () {onKeyDown("voice") },
-        "c": function () {onKeyDown("onoff") },
-        "v": function () {onKeyDown("reset") },
-    }
-
-    // 监听键盘。
-    window.onkeyup   = function (event) {
-        var f = keyUpMap[String(event.key).toLowerCase()];
-        f && f();
-        event.stopPropagation();
-        if(event.preventDefault){
-            event.preventDefault();
-        }else{
-            event.returnValue = false;
-            window.event.returnValue = false;
-        }
-    }
-    window.onkeydown = function (event) {
-        var f = keyDownMap[String(event.key).toLowerCase()];
-        f && f();
-        event.stopPropagation();
-        if(event.preventDefault){
-            event.preventDefault();
-        }else{
-            event.returnValue = false;
-            window.event.returnValue = false;
-        }
-    }
-
-    // 监听界面按钮
-    var downevent = "mousedown";
-    var upevent   = "mouseup";
-    var u = navigator.userAgent;
-    if (u.indexOf('Android') > -1 || u.indexOf('Linux') > -1) {
-        downevent = "touchstart"
-        upevent = "touchend"
-    } else if (u.indexOf('iPhone') > -1) {
-        downevent = "touchstart"
-        upevent = "touchend"
-    }
-    var btns = document.querySelectorAll("button.btn[id]");
-    for (var i = 0; i < btns.length; i++) {
-        btns[i].addEventListener(downevent,  function (e) {
-            onKeyDown(this.id);
-            e.stopPropagation();
-            if(e.preventDefault){
-                e.preventDefault();
-            }else{
-                e.returnValue = false;
-                window.event.returnValue = false;
-            }
-        });
-        btns[i].addEventListener(upevent,    function (e) {
-            onKeyUp(this.id); e.stopPropagation();
-            if(e.preventDefault){
-                e.preventDefault();
-            }else{
-                e.returnValue = false;
-                window.event.returnValue = false;
-            }
-        });
-    }
-
-    setTimeout(function () {
-        launch.reboot();
-    }, 500);
-
-    window.testspan = document.querySelector("#ddd");
-</script>
 </body>
 </html>

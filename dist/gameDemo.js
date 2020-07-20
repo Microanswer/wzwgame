@@ -1,2 +1,0 @@
-/* wzwgame v1.0.0 by Microanswer,web:http://test.microanswer.cn/wzwgame/index.html */
-!function(o){function t(){}t.prototype.onRegLaunch=function(o){},t.prototype.getPreviewAtoms=function(){},t.prototype.onLaunch=function(){},t.prototype.onUpdate=function(){},t.prototype.onUpdateStatus=function(){},t.prototype.onDestroy=function(){},t.prototype.onKeyup=function(){},t.prototype.onKeyDown=function(){},o.Demo=t}(window);
