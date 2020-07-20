@@ -4,14 +4,21 @@
  * 用法：
  *
  * let clicker = new Clicker();
+ * clicker.onClick(function () {
+ *     // 这里将会被连续执行。
+ * })
  *
+ * // 进入连续执行模式。
  * click.push();
+ *
+ * // 释放连续执行模式。
+ * click.release();
  */
 
 function Clicker(option) {
     this.option = option || {
-        timeout: 240,
-        dely: 45
+        timeout: 240,    // 首次点击与后面连续执行的第一次执行的间隔时间。
+        dely: 45         // 连续执行的间隔时间。
     };
     this.clicks = [];
     this.tasks = [];

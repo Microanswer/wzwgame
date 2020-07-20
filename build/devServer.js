@@ -1,14 +1,12 @@
 let getWebpackCfgOf = require("./webpack_config");
-let DevServer = require("webpack-dev-server");
-let path    = require("path");
-let webpack = require("webpack");
-let port    = 5686;
+let DevServer       = require("webpack-dev-server");
+let webpack         = require("webpack");
+let port            = 5686;
 
 let cfg = getWebpackCfgOf("development");
 
 Object.getOwnPropertyNames((cfg.entry || {})).map(function (name) {
     cfg.entry[name] = []
-        //添加HMR文件
         .concat("webpack/hot/dev-server")
         .concat("webpack-dev-server/client?http://localhost:" + port)
         .concat(cfg.entry[name])
@@ -33,8 +31,6 @@ let devServerCfg = {
         colors: true
     }
 };
-
-
 
 var server = new DevServer(webpack(cfg), devServerCfg);
 server.listen(port,"127.0.0.1", err => {

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "王中王掌上游戏机模拟",
   "main": "index.js",
-  "url": "http://test.microanswer.cn/wzwgame/index.html",
+  "url": "https://www.microanswer.cn",
   "scripts": {
     "start": "node build/devServer.js",
     "build": "node build/build.js"

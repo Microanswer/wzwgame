@@ -317,7 +317,7 @@ Tanker.prototype.applyAtom = function (atoms) {
         }
     }
 
-    for (i = 0; i < this.balls.length; i++) {
+    for (let i = 0; i < this.balls.length; i++) {
         let b = this.balls[i];
         if (b.available) {
             atoms[b.offsetRow][b.offsetCol] = 1;

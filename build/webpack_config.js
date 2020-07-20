@@ -1,10 +1,12 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const packageJson       = require("../package.json");
 const webpack           = require("webpack");
 const path              = require("path");
-const ProjectRoot       = path.resolve(__dirname, "../");
-const packageJson       = require("../package.json");
+const fs                = require("fs");
 
+
+const ProjectRoot       = path.resolve(__dirname, "../");
 function pathOf(dir) {
     return path.resolve(ProjectRoot, dir);
 }
@@ -43,7 +45,8 @@ function getWebpackCfgOf(env) {
         plugins: [
             new HtmlWebpackPlugin({
                 filename: "index.html",
-                template: pathOf("public/index.html")
+                template: pathOf("public/index.html"),
+                useCNZZ:  fs.existsSync("C:/microanswer") && env === "production"
             }),
             new CopyWebpackPlugin({patterns: [
                 {from: pathOf("public/index.css"), to: "css"},
@@ -51,7 +54,7 @@ function getWebpackCfgOf(env) {
                 {from: pathOf("public/right.png"), to: "img"},
             ]}),
             new webpack.BannerPlugin({
-                banner: "by microanswer.  web:https://www.microanswer.cn version:" + packageJson.version
+                banner: "By Microanswer.  url:" + packageJson.url + " version:" + packageJson.version
             })
         ]
     }
