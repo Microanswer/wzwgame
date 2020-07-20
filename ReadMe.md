@@ -16,7 +16,7 @@ npm i --registry=https://registry.npm.taobao.org
 npm start
 ```
 
-即可跑起来看效果了。
+即可跑起来看效果了。 当然 [点击这里](http://test.microanswer.cn/wzwgame/index.html) 可以直接查看线上效果。
 
 
 ## 二、详细开发文档
