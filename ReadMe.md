@@ -19,6 +19,6 @@ npm start
 即可跑起来看效果了。 当然 [点击这里](http://test.microanswer.cn/wzwgame/index.html) 可以直接查看线上效果。
 
 
-## 二、详细开发文档
+## 二、文档
 
-对于如何继续在此开发更多的游戏，此文档正在编写中...
+[立即查看](https://www.microanswer.cn/blog/85)。
