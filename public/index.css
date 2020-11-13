@@ -2,12 +2,12 @@ html,body {
     margin: 0;
     padding: 0;
     height: 100%;
-    background: #adbab8;
+    background: #e8e8e8;
     user-select: none;
 }
 
 .main {
-    padding-top: 50px;
+    padding-top: 30px;
 }
 
 tr td {
@@ -70,6 +70,15 @@ tr td {
 .mt-20 {
     margin-top: 20px!important;
 }
+.mt-15 {
+    margin-top: 15px!important;
+}
+.border-top-right-12 {
+    border-top-right-radius: 12px!important;
+}
+.border-bottom-right-12 {
+    border-bottom-right-radius: 12px!important;
+}
 
 .flex-page {
     display: flex;
@@ -90,12 +99,12 @@ tr td {
     background: #019CD6;
     width: 430px;
 
-    border-radius: 45px;
-    margin-bottom: 20px;
+    border-radius: 45px 12px 12px 12px;
+    margin-bottom: 15px;
 
     box-shadow:
-            30px 40px 40px rgba(0, 0, 0, 0.8),
-            -30px -40px 40px rgba(232, 232, 232, 0.55);
+            3px 4px 10px rgba(0, 0, 0, 0.8),
+            -3px -4px 10px rgba(232, 232, 232, 0.55);
 }
 
 .game .game-head {
@@ -161,7 +170,7 @@ tr td {
 
 
 .right {
-    margin-left: 20px;
+    margin-left: 15px;
     font-size: 95.7%;
 }
 
@@ -170,11 +179,11 @@ tr td {
     width: 300px;
     background: #019CD6;
     padding: 8px 0 30px 0;
-    border-radius: 45px;
+    border-radius: 12px 45px 45px 12px;
     color: white;
-
-    box-shadow: 10px 20px 30px rgba(0, 0, 0, 0.8);
-
+    box-shadow:
+            3px 4px 10px rgba(0, 0, 0, 0.8),
+            -3px -4px 10px rgba(232, 232, 232, 0.55);
 }
 
 .right .txt-borad p {
@@ -194,4 +203,19 @@ tr td {
     .right .txt-borad {
         width: 100%;
     }
+}
+
+
+.foot {
+    border-radius: 12px 12px 45px 45px;
+    background: #019CD6;
+    text-align: center;
+    width: 715px;
+    margin: 0 auto 30px auto;
+    color: white;
+    font-size: 13px;
+    padding: 15px;
+    box-shadow:
+            3px 4px 10px rgba(0, 0, 0, 0.8),
+            -3px -4px 10px rgba(232, 232, 232, 0.55);
 }

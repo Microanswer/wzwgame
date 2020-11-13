@@ -1,6 +1,6 @@
 var { WzwLauncher } = require("./platform/WzwLauncher");
 var { Clicker }     = require("./platform/Clicker");
-var { Snake, Tank, Tetris} = require("./games/index");
+var { Snake, Tank, Tetris, Copyor} = require("./games/index");
 
 /**
  * 建立一个启动器。
@@ -14,6 +14,7 @@ var launch = new WzwLauncher("#screen", {
 launch.regGame("A", new Tank());
 launch.regGame("B", new Tetris());
 launch.regGame("C", new Snake());
+launch.regGame("D", new Copyor());
 
 var clickers = {};
 
