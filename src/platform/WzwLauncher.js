@@ -8,7 +8,10 @@ let { WzwScreen } = require("./WzwScreen");
  */
 function WzwLauncher(dom, option) {
 
-    // 构建显示器。
+    /**
+     * 显示器实例。
+     * @type {WzwScreen}
+     */
     this.screen = new WzwScreen(dom, option);
 
     // 游戏列表

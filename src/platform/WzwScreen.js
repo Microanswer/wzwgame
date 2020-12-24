@@ -47,6 +47,25 @@ function WzwScreen(dom, option) {
         throw new Error("未知的选择器。");
     }
 
+    /**
+     *
+     * @type {{
+     *  width:          number
+     *  height:              number
+     *  atomRowCount:        number
+     *  atomColCount:        number
+     *  atomBorder:          number
+     *  atomInset:           number
+     *  atomSpace:           number
+     *  splitPosition:       number
+     *  splitSize:           number
+     *  fontSize:            number
+     *  fontHeight:          number
+     *  background:    string
+     *  color1:        string
+     *  color2:        string
+     * }}
+     */
     this.option = WzwScreen.assign({}, DEFAULT_OPTION, option || {});
 
     this.testspan = this.option.testspan;
@@ -69,6 +88,8 @@ WzwScreen.prototype.reset = function () {
  * 返回一个点阵二维数组，这个二维数组的大小和构建实例时相同。
  * @param valueAdapter [ Function ] 如果不指定，则返回的数组内容全是0，如果指定，
  * 必须是一个函数，传入rowIndex和colIndex，数组内容则是你返回的内容。
+ *
+ * @return {number[][]}
  */
 WzwScreen.prototype.makeNewArr = function (valueAdapter) {
     let _this = this;
@@ -570,11 +591,11 @@ WzwScreen.scroll = function (from, to, back, dur) {
 
 /**
  * 二维数组融合方法， 将 src 指定的二维数组融入到 tar 这个二维数组里。 通过rowIndex 和 colIndex 可以指定融入到什么位置。
- * @param src 源二维数组
- * @param tar 目标二维数组
- * @param rowIndex 目标二维数组的行号
- * @param colIndex 目标二维数组的列好
- * @param valueAdapter 自定义融合规则， 不传递则是 直接将src里覆盖对应tar里的内容。
+ * @param src {number[][]} 源二维数组
+ * @param tar {number[][]} 目标二维数组
+ * @param rowIndex {number} 目标二维数组的行号
+ * @param colIndex {number} 目标二维数组的列好
+ * @param valueAdapter {?function(tarRowIndex, tarColIndex, srcRowIndex, srcColIndex)} 自定义融合规则， 不传递则是 直接将src里覆盖对应tar里的内容。
  */
 WzwScreen.mergeArr = function(src, tar, rowIndex, colIndex, valueAdapter) {
     rowIndex = rowIndex || 0;
