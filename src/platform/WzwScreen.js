@@ -505,7 +505,7 @@ WzwScreen.assign = function () {
         }
     }
     return arg1;
-}
+};
 
 /**
  * 循环方法
@@ -521,7 +521,7 @@ WzwScreen.each = function (arr, cb/*(val, index, arr) => {} */) {
             cb && cb(i, i-1, arr);
         }
     }
-}
+};
 
 /**
  * 循环方法，这个方法用于循环二维数组。
@@ -536,7 +536,7 @@ WzwScreen.each2 = function (arr, cb/*(val, rowIndex, colIndex, arr)*/) {
             cb(col, rowIndex, colIndex, arr);
         });
     });
-}
+};
 
 /**
  * 滚动方法， 将一个数字的值滚动到另一个数值。
@@ -618,7 +618,7 @@ WzwScreen.mergeArr = function(src, tar, rowIndex, colIndex, valueAdapter) {
             }
         });
     });
-}
+};
 
 /**
  * 二维数组融合方法，和 mergeArr 不一样的是， 此方法将结果返回，而不修改 tar.
@@ -654,7 +654,7 @@ WzwScreen.mergeArr2 = function(src, tar, rowIndex, colIndex, valueAdapter) {
     });
 
     return newArr;
-}
+};
 
 /**
  * 产生一个 [start, end) 之间的随机数
@@ -663,13 +663,29 @@ WzwScreen.mergeArr2 = function(src, tar, rowIndex, colIndex, valueAdapter) {
  */
 WzwScreen.random = function(start, end) {
     return Math.floor((Math.random() * (end - start)) + start);
-}
+};
+
+/**
+ * 数组拷贝, 随便多少纬。
+ * @param src {any...[]}
+ * */
+WzwScreen.arrCopy = function arrCopy(src) {
+    const temp = [];
+    for (let i = 0; i < src.length; i++) {
+        if (Array.isArray(src[i])) {
+            temp[i] = WzwScreen.arrCopy(src[i]);
+        } else {
+            temp[i] = src[i];
+        }
+    }
+    return temp;
+};
 
 let storage = {
     getItem: function (key) {console.warn("getItem不支持localstorage、sessionstorage")},
     setItem: function (key,value) {console.warn("setItem不支持localstorage、sessionstorage")},
     removeItem: function (key) {console.warn("removeItem不支持localstorage、sessionstorage")},
-}
+};
 
 WzwScreen.storeGet = function (key) {
     let v = (localStorage || sessionStorage || storage).getItem(key);
@@ -677,13 +693,13 @@ WzwScreen.storeGet = function (key) {
         return JSON.parse(v);
     }
     return v;
-}
+};
 WzwScreen.storeSet = function(key, value) {
     return (localStorage || sessionStorage || storage).setItem(key, JSON.stringify(value));
-}
+};
 WzwScreen.storeRemove = function (key) {
     return (localStorage || sessionStorage || storage).removeItem(key);
-}
+};
 
 
 /**
