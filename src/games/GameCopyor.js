@@ -182,8 +182,8 @@ Copyor.prototype.onUpdate = function () {
         this.blocks[i].renderInAtoms(atoms);
 
 
-        // 更新玩家方块。 TODO 未完成。
-        if (Date.now() >= this.lastBlockTime + CHECKER_TIME_SPACE && this.autoUp) {
+        // 更新玩家方块。
+        if (Date.now() >= this.lastBlockTime + 30 && this.autoUp) {
 
             for (let i = 0; i < this.blocks.length; i++) {
                 this.blocks[i].upup();
@@ -198,7 +198,7 @@ Copyor.prototype.onUpdate = function () {
 
     if (
         typeof this.checkBlocks !== 'undefined' && typeof this.blocks !== 'undefined' &&
-        this.checkBlocks[0].rowOffset === this.blocks[0].rowOffset
+        (this.checkBlocks[0].rowOffset >= this.blocks[0].rowOffset)
     ) {
 
         let allSame = false;
@@ -219,7 +219,7 @@ Copyor.prototype.onUpdate = function () {
             getANewChecker.call(this);
         } else {
             // 玩家方块返回地面。
-            if (this.checkBlocks[0].rowOffset === this.screen.option.atomRowCount - 2) {
+            if (this.checkBlocks[0].rowOffset >= this.screen.option.atomRowCount - 2) {
                 // “检测方块” 已经落到地面了，结束一次生命。
                 this.oldStatus = this.status;
                 this.status = "dieing";
@@ -236,7 +236,9 @@ Copyor.prototype.onUpdate = function () {
             } else {
                 // “检测方块” 还没掉到地上
                 // 玩家方块返回地面。
-                this.blocks = WzwScreen.arrCopy(this.stepBlock);
+                for (let i = 0; i < this.blocks.length; i++) {
+                    this.blocks[i].rowOffset = this.screen.option.atomRowCount - 2;
+                }
             }
         }
 
@@ -268,7 +270,6 @@ Copyor.prototype.onUpdateStatus = function () {
 // 【生命周期函数】游戏结束时调用。比如:玩着玩着用户按一下复位按钮，此时动画执行到满屏，会调用该函数，游戏应该清除自己的状态。
 Copyor.prototype.onDestroy = function (){
     this.blocks = undefined;
-    this.stepBlock = undefined;
     this.life = 0;
 };
 
@@ -301,7 +302,6 @@ function getANewBlocks() {
         randomGetABlock(this.screen.option.atomRowCount - 2, 3),
         randomGetABlock(this.screen.option.atomRowCount - 2, 6),
     ];
-    this.stepBlock = WzwScreen.arrCopy(this.blocks);
 }
 
 function getALifeChance() {
