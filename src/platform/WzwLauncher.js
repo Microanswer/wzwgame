@@ -124,6 +124,10 @@ WzwLauncher.prototype.reboot = function () {
             // 此时动画跑满屏了。
             if(_this.currentGame) {
                 _this.currentGame.onDestroy && _this.currentGame.onDestroy();
+                _this.screen.setPause(false);
+                _this.screen.setScore(0);
+                _this.screen.setLevel(0);
+                _this.screen.setBest(0);
             }
             _this.currentGame = null; // 清除当前正在玩的游戏。
         } else if (index === 1) {

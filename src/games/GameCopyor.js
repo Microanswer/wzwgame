@@ -45,9 +45,15 @@ const BLOCKER_TYPES_IIMG = [
 
 /**
  * 检测方块下降时间间隔。
- * @type {number}
+ * @type {number[]}
  */
-const CHECKER_TIME_SPACE = 800;
+const CHECKER_TIME_SPACE = [800, 600, 500, 400, 300, 200, 100];
+
+/**
+ * 玩家在对应关卡消除了指定个数即可升级。
+ * @type {number[]}
+ */
+const SCORE_FOR_LEVEL = [15, 15, 15, 12, 12, 10, 10];
 
 /**
  * 砖块类
@@ -144,12 +150,35 @@ Copyor.prototype.onLaunch = function () {
      */
     this.status = "playing";
 
+    this.best = WzwScreen.storeGet("Copyor_best") || 0;
+    this.screen.setBest(this.best);
     this.life = 3;
     this.score = 0;
+    this.level = 0;
+    this.levelDissCount = 0;
     this.lastCheckerTime = Date.now();
     this.lastBlockTime = Date.now();
     getALifeChance.call(this);
     getANewChecker.call(this);
+};
+
+Copyor.prototype.getLevelTime = function () {
+    if (this.level >= CHECKER_TIME_SPACE.length) {
+        return CHECKER_TIME_SPACE[CHECKER_TIME_SPACE.length-1];
+    } else {
+        return CHECKER_TIME_SPACE[this.level];
+    }
+};
+
+Copyor.prototype.canLevelUp  = function () {
+    let levelJJ;
+    if (this.level >= SCORE_FOR_LEVEL.length) {
+        levelJJ = SCORE_FOR_LEVEL[SCORE_FOR_LEVEL.length - 1];
+    } else {
+        levelJJ = SCORE_FOR_LEVEL[this.level];
+    }
+
+    return this.levelDissCount >= levelJJ;
 };
 
 // 【生命周期函数】游戏过程中，此方法会不停的被调用。应当返回一个二维数组，此二维数组就会渲染到界面。
@@ -166,7 +195,7 @@ Copyor.prototype.onUpdate = function () {
 
 
         // 更新检测方块。
-        if (Date.now() >= this.lastCheckerTime + CHECKER_TIME_SPACE) {
+        if (Date.now() >= this.lastCheckerTime + this.getLevelTime()) {
 
             for (let i = 0; i < this.checkBlocks.length; i++) {
                 this.checkBlocks[i].downdown();
@@ -213,8 +242,22 @@ Copyor.prototype.onUpdate = function () {
 
         if (allSame) {
             // 检测到全部相同。
-            this.score += 100;
+            this.score += 1;
             this.screen.setScore(this.score);
+
+            this.levelDissCount += 1;
+
+            if (this.score >= this.best) {
+                this.best = this.score;
+                this.screen.setBest(this.best);
+                WzwScreen.storeSet("Copyor_best", this.best);
+            }
+
+            if (this.canLevelUp()) {
+                this.level += 1;
+                this.levelDissCount = 0;
+                this.screen.setLevel(this.level);
+            }
             getANewBlocks.call(this); // 产生新的方块
             getANewChecker.call(this);
         } else {
@@ -271,6 +314,16 @@ Copyor.prototype.onUpdateStatus = function () {
 Copyor.prototype.onDestroy = function (){
     this.blocks = undefined;
     this.life = 0;
+    this.level = 0;
+    this.levelDissCount = 0;
+    this.blocks = undefined;
+    this.checkBlocks = undefined;
+    this.screen.setLevel(0);
+    this.screen.setScore(0);
+    this.screen.setBest(0);
+    this.screen.setPause(false);
+    this.status = "stoped";
+    this.autoUp = false;
 };
 
 /**
@@ -280,6 +333,14 @@ Copyor.prototype.onDestroy = function (){
 Copyor.prototype.onKeyup = function(key) {
     if (typeof this.blocks === 'undefined') return;
 
+    if (this.status === 'pause' && key === "start") {
+        this.status = "playing";
+        this.screen.setPause(false);
+        return;
+    }
+
+    if (this.status !== 'playing') return;
+
     if (key === 'left') {
         this.blocks[0].change();
     } else if (key === 'up') {
@@ -288,6 +349,9 @@ Copyor.prototype.onKeyup = function(key) {
         this.blocks[2].change();
     } else if (key === 'rotate'){
         this.autoUp = true;
+    } else if (key === 'start') {
+        this.screen.setPause(true);
+        this.status = 'pause';
     }
 };
 
