@@ -45,7 +45,7 @@ Demo.prototype.onKeyup = function () {
 // 【事件函数】当某按键按下时调用
 Demo.prototype.onKeyDown = function () {
 
-}
+};
 
 
 exports.Demo = Demo;

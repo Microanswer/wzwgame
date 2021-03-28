@@ -1,22 +1,23 @@
-var { WzwLauncher } = require("./platform/WzwLauncher");
-var { Clicker }     = require("./platform/Clicker");
-var { Snake, Tank, Tetris, Copyor} = require("./games/index");
+let { WzwLauncher } = require("./platform/WzwLauncher");
+let { Clicker }     = require("./platform/Clicker");
+let Games           = require("./games/index");
 
 /**
  * 建立一个启动器。
  * @type {WzwLauncher}
  */
-var launch = new WzwLauncher("#screen", {
+let launch = new WzwLauncher("#screen", {
     testspan: document.querySelector("#testspan")
 });
 
 // 注册游戏
-launch.regGame("A", new Tank());
-launch.regGame("B", new Tetris());
-launch.regGame("C", new Snake());
-launch.regGame("D", new Copyor());
+launch.regGame("A", new Games.Tank());
+launch.regGame("B", new Games.Tetris());
+launch.regGame("C", new Games.Snake());
+launch.regGame("D", new Games.Copyor());
+launch.regGame("E", new Games.Speed());
 
-var clickers = {};
+let clickers = {};
 
 function onKeyUp(key)   {
     launch.onKeyUp(key);
@@ -40,11 +41,11 @@ function onKeyDown(key) {
 }
 
 function upKey(key) {
-    var btn = document.querySelector("#" + key);
+    let btn = document.querySelector("#" + key);
     btn.className = btn.className.replace(/ active/g, "");
 }
 function downKey(key) {
-    var btn = document.querySelector("#" + key);
+    let btn = document.querySelector("#" + key);
     if (btn.className.indexOf("active") < 0) {
         btn.className = btn.className + " active";
     }
@@ -60,9 +61,9 @@ var keyUpMap = {
     "x": function () {onKeyUp("voice") },
     "c": function () {onKeyUp("onoff") },
     "v": function () {onKeyUp("reset") },
-}
+};
 
-var keyDownMap = {
+let keyDownMap = {
     "w": function () {onKeyDown("up")    },
     "a": function () {onKeyDown("left")  },
     "s": function () {onKeyDown("down")  },
@@ -72,7 +73,7 @@ var keyDownMap = {
     "x": function () {onKeyDown("voice") },
     "c": function () {onKeyDown("onoff") },
     "v": function () {onKeyDown("reset") },
-}
+};
 
 // 监听键盘。
 window.onkeyup   = function (event) {
@@ -85,7 +86,7 @@ window.onkeyup   = function (event) {
         event.returnValue = false;
         window.event.returnValue = false;
     }
-}
+};
 window.onkeydown = function (event) {
     var f = keyDownMap[String(event.key).toLowerCase()];
     f && f();
@@ -96,17 +97,17 @@ window.onkeydown = function (event) {
         event.returnValue = false;
         window.event.returnValue = false;
     }
-}
+};
 
 // 监听界面按钮
 var downevent = "mousedown";
 var upevent   = "mouseup";
 var u = navigator.userAgent;
 if (u.indexOf('Android') > -1 || u.indexOf('Linux') > -1) {
-    downevent = "touchstart"
+    downevent = "touchstart";
     upevent = "touchend"
 } else if (u.indexOf('iPhone') > -1) {
-    downevent = "touchstart"
+    downevent = "touchstart";
     upevent = "touchend"
 }
 var btns = document.querySelectorAll("button.btn[id]");
