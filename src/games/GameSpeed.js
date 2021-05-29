@@ -7,7 +7,15 @@ const NAME_OTHER = "other";
 const TURBO_TINESPACE = 30;
 
 // 每关卡的时间长度
-const LEVEL_TIMESPACE = [350, 300, 250, 200, 150, 100, 50];
+const LEVEL_TIMESPACE = [320, 280, 240, 200, 160, 120, 80, 40];
+
+const GAME_STATUS = {
+    STATUS_UNSET: 0,
+    STATUS_PAUSE: 1,
+    STATUS_GAMEING: 2,
+    STATUS_DIEING: 3,
+    STATUS_GAMEOVER: 4
+}
 
 /**
  * 赛车内
@@ -22,7 +30,7 @@ function Car(name, offsetRow, offsetCol, wzwScreen) {
         [0,1,0],
         [1,1,1],
         [0,1,0],
-        [1,1,1]
+        [1,0,1]
     ];
 
     this.offsetCol = offsetCol;
@@ -59,13 +67,13 @@ Car.prototype.render = function (atoms) {
 function Road(wzwScreen) {
     this.left = [];
     this.right = [];
+    this.wzwScreen = wzwScreen;
 
     let flag = 1; // 0 输出无， 1,2 输出有。
-    for (let i = 0; i < wzwScreen; i++) {
-        if (i % 2 === 0) {
-            this.left.push([flag > 0 ? 1 : 0]);
-            this.right.push([flag > 0 ? 1 : 0]);
-        }
+    for (let i = 0; i < wzwScreen.option.atomRowCount; i++) {
+
+        this.left.push([flag > 0 ? 1 : 0]);
+        this.right.push([flag > 0 ? 1 : 0]);
 
         if (flag + 1 > 2) {
             flag = 0;
@@ -73,12 +81,14 @@ function Road(wzwScreen) {
             flag = flag + 1;
         }
     }
+    console.log(this.left);
 }
 
 Road.prototype.render = function (atoms) {
     WzwScreen.mergeArr(this.left, atoms, 0, 0, undefined);
     WzwScreen.mergeArr(this.right, atoms, 0, this.wzwScreen.option.atomColCount - 1, undefined);
 
+    // 公路向下移动
     let l = this.left.pop();this.left.splice(0, 0, l);
     let c = this.right.pop();this.right.splice(0, 0, c);
 };
@@ -89,13 +99,18 @@ Road.prototype.render = function (atoms) {
  */
 
 function Speed() {
+    this.status = GAME_STATUS.STATUS_UNSET;
 
     this.initPreview();
 }
 
-// 【生命周期函数】当此游戏被注册到launch上时调用，并传入launch实例
+/** 【生命周期函数】当此游戏被注册到launch上时调用，并传入launch实例
+ *
+ * @param launch {WzwLauncher}
+ */
 Speed.prototype.onRegLaunch = function (launch) {
-
+    this.launch = launch;
+    this.wzwScreen = launch.screen;
 };
 
 // 【生命周期函数】预览，此方法应返回一个二维数组，一个row=10，col=11的二维数组。此方法会不停的被调用。
@@ -112,14 +127,38 @@ Speed.prototype.getPreviewAtoms = function () {
     return arr;
 };
 
+/**
+ * 消耗并产生一个新的玩家。
+ */
+Speed.prototype.useNewPlayer = function () {
+    return new Car(NAME_ME, this.wzwScreen.option.atomRowCount - 6, this.wzwScreen.option.atomColCount - 7, this.wzwScreen);
+};
+
 // 【生命周期函数】当游戏启动时调用。
 Speed.prototype.onLaunch = function () {
+    this.road = new Road(this.wzwScreen);
+    this.atoms = this.wzwScreen.makeNewArr();
+    this.status = GAME_STATUS.STATUS_GAMEING;
+    this.turbo = false;
+    this.level = 1;
 
+    this.player = this.useNewPlayer();
 };
 
 // 【生命周期函数】游戏过程中，此方法会不停的被调用。应当返回一个二维数组，此二维数组就会渲染到界面。
 Speed.prototype.onUpdate = function () {
+    if (!this.atoms) {return;}
+    if (this.status === GAME_STATUS.STATUS_PAUSE) {return this.atoms;}
 
+    if (Date.now() - (this.gameLastTime || 0) > (this.turbo ? TURBO_TINESPACE : LEVEL_TIMESPACE[this.level - 1])) {
+
+        this.atoms = this.wzwScreen.makeNewArr();
+        this.road.render(this.atoms);
+        this.player.render(this.atoms);
+        this.gameLastTime = Date.now();
+    }
+
+    return this.atoms;
 };
 
 // 【生命周期函数】游戏过程中，此方法会不同的被调用。返回一个二维数组，此二维数组会渲染到右侧的小点阵区域。
@@ -132,14 +171,31 @@ Speed.prototype.onDestroy = function (){
 
 };
 
-// 【事件函数】当某按键抬起时调用
-Speed.prototype.onKeyup = function () {
-
+/**
+ * 【事件函数】当某按键抬起时调用
+ *  @param key {"up" |"right" |"down" |"left" |"rotate" |"start" |"voice" |"onoff" |"reset"}
+ */
+Speed.prototype.onKeyup = function (key) {
+    if (this.status === GAME_STATUS.STATUS_PAUSE) {
+        if (key === "start") {
+            this.status = GAME_STATUS.STATUS_GAMEING;
+        }
+        return;
+    }
+    if (key === "rotate") {
+        this.turbo = false
+    }
 };
+/**
+ *  【事件函数】当某按键按下时调用
+ *  @param key {"up" |"right" |"down" |"left" |"rotate" |"start" |"voice" |"onoff" |"reset"}
+ */
+Speed.prototype.onKeyDown = function (key) {
+    if (this.status === GAME_STATUS.STATUS_PAUSE) {return;}
 
-// 【事件函数】当某按键按下时调用
-Speed.prototype.onKeyDown = function () {
-
+    if (key === "rotate") {
+        this.turbo = true
+    }
 };
 /**
  * 初始化预览界面。
