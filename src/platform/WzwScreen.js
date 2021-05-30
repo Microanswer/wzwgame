@@ -1103,7 +1103,11 @@ WzwScreen.LETTER = {
 };
 
 
-// 爆炸类。
+/**
+ *  爆炸类。
+ * @param param {{offsetRow:number,offsetCol: number,keepTime?:number,onEnd?:function()}}
+ * @constructor
+ */
 function Bomb(param) {
     param = param || {};
 
@@ -1115,14 +1119,14 @@ function Bomb(param) {
     this.frams  =
         [
             [[1,0,0,1],
-                [0,1,1,0],
-                [0,1,1,0],
-                [1,0,0,1]],
+             [0,1,1,0],
+             [0,1,1,0],
+             [1,0,0,1]],
 
             [[0,1,1,0],
-                [1,0,0,1],
-                [1,0,0,1],
-                [0,1,1,0]]
+             [1,0,0,1],
+             [1,0,0,1],
+             [0,1,1,0]]
         ];
     this.currentFram = 0;
     this.keepTime = param.keepTime || 1000; // 爆炸持续时间 （毫秒）
@@ -1144,6 +1148,14 @@ Bomb.prototype.update = function () {
 
 Bomb.prototype.getCurrentFrame = function () {
     return this.frams[this.currentFram];
+}
+
+/**
+ * 渲染
+ * @param atoms {number[][]}
+ */
+Bomb.prototype.render = function (atoms) {
+    WzwScreen.mergeArr(this.getCurrentFrame(), atoms, this.offsetRow, this.offsetCol, undefined);
 }
 
 exports.WzwBomb   = Bomb;

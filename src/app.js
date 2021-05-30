@@ -12,10 +12,10 @@ let launch = new WzwLauncher("#screen", {
 
 // 注册游戏
 launch.regGame("A", new Games.Tank());
-launch.regGame("B", new Games.Tetris());
-launch.regGame("C", new Games.Snake());
-launch.regGame("D", new Games.Copyor());
-launch.regGame("E", new Games.Speed());
+launch.regGame("B", new Games.Speed());
+launch.regGame("C", new Games.Tetris());
+launch.regGame("D", new Games.Snake());
+launch.regGame("E", new Games.Copyor());
 
 let clickers = {};
 
@@ -52,32 +52,42 @@ function downKey(key) {
 }
 
 var keyUpMap = {
-    "w": function () {onKeyUp("up")    },
-    "a": function () {onKeyUp("left")  },
-    "s": function () {onKeyUp("down")  },
-    "d": function () {onKeyUp("right") },
-    " ": function () {onKeyUp("rotate")},
-    "z": function () {onKeyUp("start") },
-    "x": function () {onKeyUp("voice") },
-    "c": function () {onKeyUp("onoff") },
-    "v": function () {onKeyUp("reset") },
+    /*w*/"87": function () {onKeyUp("up")    },
+    /*↑*/"38": function () {onKeyUp("up")    },
+    /*a*/"65": function () {onKeyUp("left")  },
+    /*←*/"37": function () {onKeyUp("left")  },
+    /*s*/"83": function () {onKeyUp("down")  },
+    /*↓*/"40": function () {onKeyUp("down")  },
+    /*d*/"68": function () {onKeyUp("right") },
+    /*→*/"39": function () {onKeyUp("right") },
+    /* */"32": function () {onKeyUp("rotate")},
+    /*回车*/"13": function () {onKeyUp("rotate")},
+    /*z*/"90": function () {onKeyUp("start") },
+    /*x*/"88": function () {onKeyUp("voice") },
+    /*c*/"67": function () {onKeyUp("onoff") },
+    /*v*/"86": function () {onKeyUp("reset") },
 };
 
 let keyDownMap = {
-    "w": function () {onKeyDown("up")    },
-    "a": function () {onKeyDown("left")  },
-    "s": function () {onKeyDown("down")  },
-    "d": function () {onKeyDown("right") },
-    " ": function () {onKeyDown("rotate")},
-    "z": function () {onKeyDown("start") },
-    "x": function () {onKeyDown("voice") },
-    "c": function () {onKeyDown("onoff") },
-    "v": function () {onKeyDown("reset") },
+     /*w*/"87": function () {onKeyDown("up")    },
+     /*↑*/"38": function () {onKeyDown("up")    },
+     /*a*/"65": function () {onKeyDown("left")  },
+     /*←*/"37": function () {onKeyDown("left")  },
+     /*s*/"83": function () {onKeyDown("down")  },
+     /*↓*/"40": function () {onKeyDown("down")  },
+     /*d*/"68": function () {onKeyDown("right") },
+     /*→*/"39": function () {onKeyDown("right") },
+     /* */"32": function () {onKeyDown("rotate")},
+     /*回车*/"13": function () {onKeyDown("rotate")},
+     /*z*/"90": function () {onKeyDown("start") },
+     /*x*/"88": function () {onKeyDown("voice") },
+     /*c*/"67": function () {onKeyDown("onoff") },
+     /*v*/"86": function () {onKeyDown("reset") },
 };
 
 // 监听键盘。
 window.onkeyup   = function (event) {
-    var f = keyUpMap[String(event.key).toLowerCase()];
+    var f = keyUpMap[String(event.keyCode).toLowerCase()];
     f && f();
     event.stopPropagation();
     if(event.preventDefault){
@@ -88,7 +98,7 @@ window.onkeyup   = function (event) {
     }
 };
 window.onkeydown = function (event) {
-    var f = keyDownMap[String(event.key).toLowerCase()];
+    var f = keyDownMap[String(event.keyCode).toLowerCase()];
     f && f();
     event.stopPropagation();
     if(event.preventDefault){
