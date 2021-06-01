@@ -4,7 +4,7 @@ const NAME_ME = "me";
 const NAME_OTHER = "other";
 
 // 急速模式下，时间长度。
-const TURBO_TINESPACE = 20;
+const TURBO_TINESPACE = 16;
 
 // 每关卡的时间长度
 const LEVEL_TIMESPACE = [320, 280, 240, 200, 160, 120, 80, 40];
@@ -17,7 +17,7 @@ const GAME_STATUS = {
     STATUS_GAMEING: 2,
     STATUS_DIEING: 3,
     STATUS_GAMEOVER: 4
-}
+};
 
 /**
  * 赛车内
@@ -356,12 +356,7 @@ Speed.prototype.onDestroy = function (){
  *  @param key {"up" |"right" |"down" |"left" |"rotate" |"start" |"voice" |"onoff" |"reset"}
  */
 Speed.prototype.onKeyup = function (key) {
-    if (this.status === GAME_STATUS.STATUS_PAUSE) {
-        if (key === "start") {
-            this.status = GAME_STATUS.STATUS_GAMEING;
-        }
-        return;
-    }
+
 
     if (key === "rotate") {
         this.turbo = false
@@ -372,7 +367,13 @@ Speed.prototype.onKeyup = function (key) {
  *  @param key {"up" |"right" |"down" |"left" |"rotate" |"start" |"voice" |"onoff" |"reset"}
  */
 Speed.prototype.onKeyDown = function (key) {
-    if (this.status === GAME_STATUS.STATUS_PAUSE) {return;}
+    if (this.status === GAME_STATUS.STATUS_PAUSE) {
+        if (key === "start") {
+            this.status = GAME_STATUS.STATUS_GAMEING;
+            this.wzwScreen.setPause(false);
+        }
+        return;
+    }
 
     if (key === "rotate") {
         this.turbo = true
@@ -383,6 +384,9 @@ Speed.prototype.onKeyDown = function (key) {
         this.player.left();
     } else if (key === "right") {
         this.player.right();
+    } else if (key === "start") {
+        this.status = GAME_STATUS.STATUS_PAUSE;
+        this.wzwScreen.setPause(true);
     }
 };
 /**
