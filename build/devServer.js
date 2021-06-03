@@ -81,6 +81,6 @@ server.use("/favicon.ico", (req, res) => {
     res.header({"Content-Type": "image/x-icon"});
     res.end(faviconBuffer);
 });
-server.listen(port,"127.0.0.1", err => {
+server.listen(port, err => {
     console.log('Started server on http://localhost:' + port);
 });

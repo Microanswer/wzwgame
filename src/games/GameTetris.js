@@ -255,12 +255,16 @@ Tetris.prototype.reset = function () {
 };
 
 Tetris.prototype.turboModeON = function () {
+    if (!this.canTurbo) {
+        return;
+    }
+    this.canTurbo = false;
     this.turbo = true;
-}
+};
 
 Tetris.prototype.turboModeOFF = function () {
     this.turbo = false;
-}
+};
 
 // 游戏启动时调用此方法
 Tetris.prototype.onLaunch = function () {
@@ -269,6 +273,7 @@ Tetris.prototype.onLaunch = function () {
     // 初始化下一个材料
     this.nextStuff = getRandomStuff.call(this);
     this.status = GAME_STATUS.PLAYING;
+    this.canTurbo = true;
 };
 
 // 此方法会在游戏过程中不停调用。
@@ -378,15 +383,16 @@ Tetris.prototype.pause = function () {
         this.launch.screen.setPause(false);
     }
 
-}
+};
 
 // 此方法在按下对应按钮时会执行。
 Tetris.prototype.onKeyup = function (key) {
     let _this = this;
     if ("down" === key) {
         _this.turboModeOFF();
+        this.canTurbo = true;
     }
-}
+};
 
 // 某个按键按下时调用。
 Tetris.prototype.onKeyDown = function(key) {
@@ -407,7 +413,7 @@ Tetris.prototype.onKeyDown = function(key) {
         if (_this.status === GAME_STATUS.PAUSE) return;
         _this.turboModeON();
     }
-}
+};
 
 // 此方法当用户按复位时，动画执行到满屏，会调用，游戏应该清除自己的状态。
 Tetris.prototype.onDestroy = function () {
@@ -416,7 +422,7 @@ Tetris.prototype.onDestroy = function () {
     this.launch.screen.setScore(0);
     this.launch.screen.setPause(false);
     this.launch.exitCurentGame(); // 退出当前游戏
-}
+};
 
 // 游戏结束时执行此方法
 function doGameOver() {
@@ -545,6 +551,7 @@ function rotateStuff () {
     if (_this.atoms && _this.stuff && GAME_STATUS.PLAYING === _this.status) {
         let temp = [[], [], [], []];
 
+        let oldStuffOffsetCol = _this.stuffOffsetCol;
         // 进行旋转材料
         for (let i = 0; i < _this.stuff.length; i++) {
             for (let j = 0; j < _this.stuff[i].length; j++) {
@@ -559,17 +566,25 @@ function rotateStuff () {
                 }
 
                 if (_this.stuffOffsetRow + ni >= _this.atoms.length) {
-                    /*变化会超出屏幕，不准变*/
+                    /*变化会超出屏幕底部，不准变*/
                     return;
                 }
 
-                if (_this.stuffOffsetCol + nj >= _this.atoms[0].length || _this.stuffOffsetCol + nj < 0) {
-                    return;
+
+                if (_this.stuffOffsetCol + nj >= _this.atoms[0].length) {
+                    /*变化会超出屏幕右边，此时看看左边有咩有足够的空间，有的话将材料向左边移动*/
+                    _this.stuffOffsetCol = _this.atoms[0].length - nj - 1;
+                    // return;
                 }
 
+                if (_this.stuffOffsetCol + nj < 0) {
+                    /* 变化会超出屏幕左边， 此时将裁量向右移动。 */
+                    _this.stuffOffsetCol = 0 - nj;
+                }
 
                 /*判断变化后的材料是否和已确定的堆砌产生重叠，产生了则不进行此次变化*/
                 if (_this.atomsed[_this.stuffOffsetRow + ni][_this.stuffOffsetCol + nj] === 1) {
+                    _this.stuffOffsetCol = oldStuffOffsetCol;
                     return;
                 }
             }
