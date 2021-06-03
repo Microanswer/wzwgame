@@ -10,6 +10,9 @@ html,body {
     padding-top: 30px;
 }
 
+.d-inline {
+    display: inline-block;
+}
 tr td {
     text-align: center;
 }
@@ -40,7 +43,8 @@ tr td {
 
 .btn.hide {
     opacity: 0;
-    display: none;
+    /*display: none;*/
+    width: 30px;
 }
 .btn.big {
     width: 73px;
@@ -100,7 +104,6 @@ tr td {
     width: 430px;
 
     border-radius: 45px 12px 12px 12px;
-    margin-bottom: 15px;
 
     box-shadow:
             3px 4px 10px rgba(0, 0, 0, 0.8),
@@ -190,28 +193,13 @@ tr td {
     margin: 0 20px;
 }
 
-@media screen and (max-width: 420px) {
-    .main {
-        width: 100%;
-        padding-top: 0;
-    }
-
-    .right {
-        width: 100%;
-        margin-left: 0;
-    }
-    .right .txt-borad {
-        width: 100%;
-    }
-}
-
 
 .foot {
     border-radius: 12px 12px 45px 45px;
     background: #019CD6;
     text-align: center;
     width: 715px;
-    margin: 0 auto 30px auto;
+    margin: 15px auto 30px auto;
     color: white;
     font-size: 13px;
     padding: 15px;
@@ -219,3 +207,61 @@ tr td {
             3px 4px 10px rgba(0, 0, 0, 0.8),
             -3px -4px 10px rgba(232, 232, 232, 0.55);
 }
+
+@media screen and (max-width: 800px) {
+    .main {
+        width: 100%;
+        padding-top: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    .game {
+        width: 100%;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .game .game-head {
+        padding: 20px 0 50px 0;
+    }
+
+    .game .game-head .centerdoc {
+        position: relative;
+        display: inline-block;
+        border: 4px solid #280000;
+        padding: 10px 10px 20px 10px;
+    }
+
+    .game .game-head .leftdoc {margin-right: 6px;}
+    .game .game-head .rightdoc {margin-left: 6px;}
+
+    .border-bottom-right-12 {
+        border-bottom-right-radius: 0!important;
+    }
+    .border-top-right-12 {
+        border-top-right-radius: 0!important;
+    }
+
+    .right {
+        display: none;
+        margin-top: 15px;
+        width: 100%;
+        margin-left: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+    .right .txt-borad {
+        width: 100%;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .foot {
+        display: none;
+        width: 100%;
+        box-shadow: none;
+        border-radius: 0;
+        padding: 0!important;
+    }
+}
+
