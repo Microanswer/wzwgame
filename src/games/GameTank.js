@@ -708,6 +708,11 @@ TankerBoss.prototype.updateAndApply = function (atoms) {
 // 发射
 TankerBoss.prototype.shoot = function () {
     let _this = this;
+    if (_this.shooted) {
+        _this.shooted = false;
+        return;
+    }
+    _this.shooted = true;
     let ball = new Ball(_this, function (ball) {
         let i = _this.balls.indexOf(ball);
         if (i <= -1) {return;}
