@@ -78,6 +78,14 @@ function WzwScreen(dom, option) {
 }
 
 /**
+ * 获取单个点的像素大小
+ * @return {{width: number, height: number}}
+ */
+WzwScreen.prototype.getAtomSize = function () {
+    return {width: this.drawParam.atomWidth, height: this.drawParam.atomHeight};
+}
+
+/**
  * 重置游戏
  */
 WzwScreen.prototype.reset = function () {

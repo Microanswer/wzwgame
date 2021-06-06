@@ -4,7 +4,7 @@ const NAME_ME = "me";
 const NAME_OTHER = "other";
 
 // 急速模式下，时间长度。
-const TURBO_TINESPACE = 16;
+const TURBO_TINESPACE = 20;
 
 // 每关卡的时间长度
 const LEVEL_TIMESPACE = [320, 280, 240, 200, 160, 120, 80, 40];
