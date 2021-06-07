@@ -1116,7 +1116,7 @@ WzwScreen.LETTER = {
  * @param param {{offsetRow:number,offsetCol: number,keepTime?:number,onEnd?:function()}}
  * @constructor
  */
-function Bomb(param) {
+function WzwBomb(param) {
     param = param || {};
 
     this.height = 4;
@@ -1147,24 +1147,24 @@ function Bomb(param) {
     }, this.keepTime);
 }
 
-Bomb.prototype.update = function () {
+WzwBomb.prototype.update = function () {
     if (Date.now() - (this.lastTime || 0) >= this.time) {
         this.currentFram = this.currentFram === 0 ? 1 : 0;
         this.lastTime = Date.now();
     }
-}
+};
 
-Bomb.prototype.getCurrentFrame = function () {
+WzwBomb.prototype.getCurrentFrame = function () {
     return this.frams[this.currentFram];
-}
+};
 
 /**
  * 渲染
  * @param atoms {number[][]}
  */
-Bomb.prototype.render = function (atoms) {
+WzwBomb.prototype.render = function (atoms) {
     WzwScreen.mergeArr(this.getCurrentFrame(), atoms, this.offsetRow, this.offsetCol, undefined);
-}
+};
 
-exports.WzwBomb   = Bomb;
+exports.WzwBomb   = WzwBomb;
 exports.WzwScreen = WzwScreen;

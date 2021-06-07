@@ -11,9 +11,9 @@ let launch = new WzwLauncher("#screen", {
 });
 
 // 注册游戏
-launch.regGame("C", new Games.Shooter());
 launch.regGame("A", new Games.Tank());
 launch.regGame("B", new Games.Speed());
+launch.regGame("C", new Games.Shooter());
 launch.regGame("D", new Games.Tetris());
 launch.regGame("E", new Games.Snake());
 launch.regGame("F", new Games.Copyor());

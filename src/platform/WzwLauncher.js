@@ -109,7 +109,7 @@ WzwLauncher.prototype.exitCurentGame = function () {
     let _this = this;
     _this.status = WzwLauncher.STATUS.BOOTED;
     _this.currentGame = undefined;
-}
+};
 
 /**
  * 重启，其实就是复位的功能。
@@ -249,7 +249,7 @@ function logicUpdate () {
         this.screen.setScore(0);
         this.screen.setLevel(0);
         this.screen.setBest(0);
-        this.screen.setPause(false)
+        this.screen.setPause(false);
         return;
     }
 

@@ -1,4 +1,4 @@
-let {WzwScreen} = require("../platform/WzwScreen");
+let {WzwScreen, WzwBomb} = require("../platform/WzwScreen");
 
 const GAME_STATUS = {
     STATUS_UNSET: 0,
@@ -8,6 +8,9 @@ const GAME_STATUS = {
     STATUS_GAMEOVER: 4
 };
 
+const LIEVELS_TIME = [700, 650, 600, 550, 500, 450, 400, 350, 300, 250, 200, 150, 100,  100,  100,  100,  100,  100 ];
+const LEVEL_COUNT =  [400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1100, 1200, 1300, 1400, 1500];
+
 
 /**
  * 玩家的飞机发射出来的子弹类。
@@ -15,8 +18,9 @@ const GAME_STATUS = {
  * @param wzwScreen {WzwScreen}
  * @param offsetCol {number}
  * @param offsetRow {number}
+ * @param wall {number[][]}
  */
-function Bullet (offsetCol, offsetRow, wzwScreen) {
+function Bullet (offsetCol, offsetRow, wzwScreen, wall) {
     this.disabled = false;
     this.screen = wzwScreen;
     this.offsetCol = offsetCol;
@@ -24,9 +28,10 @@ function Bullet (offsetCol, offsetRow, wzwScreen) {
     this.initOffsetRow = offsetRow;
     this.disabledListener = undefined;
     this.atoms = [[1]];
+    this.wall = wall;
     this.distance = 0; // 子弹从发出以来离飞机的距离
 
-    this.speed = 70; // 子弹速度。 单位秒。 每秒50个像素点的速度。
+    this.speed = 180; // 子弹速度。 单位秒。 每秒200个点的速度。
 
     // 上面的单位是秒， 在 计算的时候 通常使用的是毫秒，所以此处将速度转换为 每毫秒的速度。 时间×速度 = 距离
     this.speed = (this.speed / 1000);
@@ -37,7 +42,20 @@ function Bullet (offsetCol, offsetRow, wzwScreen) {
  */
 Bullet.prototype.setDisabledListener = function(disabledListener) {
     this.disabledListener = disabledListener;
-}
+};
+
+Bullet.prototype.getMyTargetWallRowIndex = function () {
+    for (var i = this.wall.length - 1; i >= 0 ; i--) {
+        if (this.wall[i][this.offsetCol] === 1) {
+            return i;
+        }
+    }
+    return -999;
+};
+
+Bullet.prototype.getScore = function (){
+    return this.score || 0;
+};
 
 Bullet.prototype.update = function () {
     if (this.disabled) return;
@@ -55,7 +73,17 @@ Bullet.prototype.update = function () {
     // 使用新的距离计算得到新的坐标。
     this.offsetRow = this.initOffsetRow - Math.round(this.distance);
 
-    if (this.offsetRow < 0) { // 此子弹已飞出屏幕。
+    let wallRow = this.getMyTargetWallRowIndex();
+    if (this.offsetRow <= wallRow && !this.disabled) { // 子弹击中墙块。
+        this.disabled = false;
+        this.score = 1;
+        this.wall[wallRow][this.offsetCol] = 0;
+        if (this.disabledListener) {
+            this.disabledListener(this);
+        }
+    }
+
+    if (this.offsetRow < 0 && !this.disabled) { // 此子弹已飞出屏幕。
         this.disabled = true;
         if (this.disabledListener) {
             this.disabledListener(this);
@@ -63,7 +91,7 @@ Bullet.prototype.update = function () {
     }
 
     this.lastTime = Date.now();
-}
+};
 
 /**
  * 渲染子弹
@@ -73,25 +101,32 @@ Bullet.prototype.render = function (atoms) {
     if (this.disabled) return;
     // console.log(this.atoms, atoms);
     WzwScreen.mergeArr(this.atoms, atoms, this.offsetRow, this.offsetCol,undefined);
-}
+};
 
 /**
  * 玩家控制的飞机类。
  * @constructor
  * @param screen {WzwScreen}
+ * @param wall {number[][]}
  */
-function Plane(screen) {
+function Plane(screen, wall) {
     this.screen = screen;
     this.atoms = [
         [0,1,0],
         [1,1,1]
     ];
+    this.wall = wall;
 
     /** @type {Bullet[]} */
     this.bullets = [];
     this.offsetRow = screen.option.atomRowCount - this.atoms.length;
     this.offsetCol = Math.floor((screen.option.atomColCount - 1 - this.atoms[0].length) / 2);
+    this.onWallHinted = undefined;
 }
+
+Plane.prototype.setOnWallHintedListener = function(onWallHinted) {
+    this.onWallHinted = onWallHinted;
+};
 
 /**
  * 飞机向左边移动
@@ -103,7 +138,7 @@ Plane.prototype.left = function () {
     }
 
     this.offsetCol = this.offsetCol - 1;
-}
+};
 
 /**
  * 飞机向右边移动
@@ -113,7 +148,7 @@ Plane.prototype.right = function () {
         return
     }
     this.offsetCol = this.offsetCol + 1;
-}
+};
 
 /**
  * 发射子弹
@@ -121,19 +156,26 @@ Plane.prototype.right = function () {
 Plane.prototype.shoot = function () {
     var _this = this;
 
-    // if (_this.bullets.length > 8) {
-    //     return ;
-    // }
+    if (_this.bullets.length > 2) {
+        return ;
+    }
 
-    var b = new Bullet(this.offsetCol + 1, this.offsetRow - 1, this.screen);
+    var b = new Bullet(this.offsetCol + 1, this.offsetRow - 1, this.screen, this.wall);
     b.setDisabledListener(function (bullet) {
+
+        if (bullet.getScore() > 0) {
+            if (_this.onWallHinted) {
+                _this.onWallHinted(bullet.getScore());
+            }
+        }
+
         let index =  _this.bullets.indexOf(bullet);
         if (index !== -1) {
             _this.bullets.splice(index, 1);
         }
     });
     this.bullets.push(b);
-}
+};
 
 /**
  * 更新函数。
@@ -145,7 +187,7 @@ Plane.prototype.update = function () {
             this.bullets[i].update();
         }
     }
-}
+};
 
 /**
  * 渲染含数
@@ -158,7 +200,7 @@ Plane.prototype.render = function (atoms) {
             this.bullets[i].render(atoms);
         }
     }
-}
+};
 
 
 /**
@@ -202,9 +244,32 @@ Shooter.prototype.getPreviewAtoms = function () {
  */
 Shooter.prototype.startNewGame = function () {
     let player = undefined;
-    for (let i = 0; i < this.life.length; i++) {
-        if (this.life[i][0] === 1) {
-            player = new Plane(this.screen);
+    let _this = this;
+    this.wall = [];
+    for (let i = 0; i < _this.life.length; i++) {
+        if (_this.life[i][0] === 1) {
+            player = new Plane(_this.screen, _this.wall);
+
+            player.setOnWallHintedListener(function (score) {
+                _this.wallShootedCount = _this.wallShootedCount + 1;
+                _this.score = _this.score + score;
+                _this.screen.setScore(_this.score);
+                if (_this.score > _this.bestScore) {
+                    _this.bestScore = _this.score;
+                    _this.screen.setBest(_this.bestScore);
+                    WzwScreen.storeSet("shooter_best", _this.bestScore);
+                }
+
+                if (_this.wallShootedCount >= (LEVEL_COUNT[_this.level] || LEVEL_COUNT[LEVEL_COUNT.length - 1])) {
+                    _this.wallShootedCount = 0;
+                    _this.level = _this.level + 1;
+                    _this.screen.setLevel(_this.level + 1);
+                }
+            });
+            _this.life[i][0] = 0;
+            _this.life[i][1] = 0;
+            _this.life[i][2] = 0;
+            _this.life[i][3] = 0;
             break;
         }
     }
@@ -215,9 +280,16 @@ Shooter.prototype.startNewGame = function () {
     } else {
         // 没有生命了，游戏结束。
         this.status = GAME_STATUS.STATUS_GAMEOVER;
+
+        let _this = this;
+        this.launch.screen.playAnim(WzwScreen.ANIM.B2T, function (animName, index) {
+            if (index === 0) {
+                _this.onDestroy();
+            }
+        });
     }
 
-}
+};
 
 /**
  * 【生命周期函数】当游戏启动时调用。
@@ -232,11 +304,52 @@ Shooter.prototype.onLaunch = function () {
 
     /** @type Plane */
     this.player = undefined;
+    /** @type {WzwBomb} */
+    this.boom = undefined;
     this.score = 0;
-    this.pause = false;
-
+    this.bestScore = WzwScreen.storeGet("shooter_best") || 0;
+    this.level = 0;
+    this.wallShootedCount = 0; // 射击了的砖块数量，
+    this.screen.setLevel(this.level + 1);
+    this.screen.setBest(this.bestScore);
 
     this.startNewGame();
+};
+
+/**
+ * 生成墙壁。
+ */
+Shooter.prototype.growWall = function () {
+    if (typeof this.lastTime == 'undefined') {
+        this.lastTime = 0;
+    }
+
+    // 判断最下面的行是否被清空了，清空了后就移除这一行了。
+    if (this.wall.length > 0) {
+        var lastRow = this.wall[this.wall.length - 1];
+        var lastRowEmpty = true;
+        for (var i = 0; i < lastRow.length; i++) {
+            if (lastRow[i] === 1) {
+                lastRowEmpty = false;
+                break;
+            }
+        }
+        if (lastRowEmpty) {
+            this.wall.pop();
+        }
+    }
+
+    if(Date.now() - this.lastTime >= (LIEVELS_TIME[this.level] || 30)) {
+
+        var arr =[];
+        for (var i = 0; i < this.screen.option.atomColCount; i++) {
+            arr.push(Math.random() > 0.8? 0 : 1);
+        }
+
+        this.wall.splice(0,0, arr);
+        this.lastTime = Date.now();
+    }
+
 };
 
 /**
@@ -249,12 +362,38 @@ Shooter.prototype.onUpdate = function () {
     if (this.status === GAME_STATUS.STATUS_GAMEING) {
         if (this.player) {
             this.player.update();
+
+            // 陆续生成墙壁。
+            this.growWall();
+
+            // 判断墙壁是否到底玩家头上。
+            if (this.wall.length > this.player.offsetRow) {
+                this.status = GAME_STATUS.STATUS_DIEING;
+                var _this = this;
+                this.boom = new WzwBomb({
+                    offsetCol: this.player.offsetCol,
+                    offsetRow: this.player.offsetRow,
+                    onEnd: function () {
+                        _this.boom = undefined;
+                        _this.startNewGame();
+                    }
+                });
+            }
         }
+    }
+    if(this.boom) {
+        this.boom.update();
     }
 
     // render ====================
     if (this.player) {
         this.player.render(atoms);
+    }
+    if (this.wall) {
+        WzwScreen.mergeArr(this.wall, atoms, 0, 0, undefined);
+    }
+    if (this.boom) {
+        this.boom.render(atoms);
     }
 
 
@@ -272,7 +411,12 @@ Shooter.prototype.onUpdateStatus = function () {
  * 【生命周期函数】游戏结束时调用。比如:玩着玩着用户按一下复位按钮，此时动画执行到满屏，会调用该函数，游戏应该清除自己的状态。
  */
 Shooter.prototype.onDestroy = function (){
-
+    this.launch.exitCurentGame();
+    this.screen.setPause(false);
+    this.screen.setScore(0);
+    this.screen.setBest(0);
+    this.screen.setLevel(0);
+    WzwScreen.storeSet("shooter_best", this.bestScore);
 };
 
 
@@ -281,7 +425,16 @@ Shooter.prototype.onDestroy = function (){
  *  @param key {"up" |"right" |"down" |"left" |"rotate" |"start" |"voice" |"onoff" |"reset"}
  */
 Shooter.prototype.onKeyup = function (key) {
+    if (key === "start") {
 
+        if (this.status === GAME_STATUS.STATUS_PAUSE) {
+            this.status = GAME_STATUS.STATUS_GAMEING;
+            this.screen.setPause(false);
+        } else if (this.status === GAME_STATUS.STATUS_GAMEING){
+            this.status = GAME_STATUS.STATUS_PAUSE;
+            this.screen.setPause(true);
+        }
+    }
 };
 
 
