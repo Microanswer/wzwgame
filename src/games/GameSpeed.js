@@ -73,13 +73,14 @@ Car.prototype.isCarBoom = function (car) {
 Car.prototype.update = function () {
     if (this.name === NAME_OTHER) {
         this.offsetRow = this.offsetRow + 1;
-    }
 
-    if (this.offsetRow > this.wzwScreen.option.atomRowCount) {
-        if (this.outScreenListener) {
-            this.outScreenListener(this);
+        if (this.offsetRow > this.wzwScreen.option.atomRowCount) {
+            if (this.outScreenListener) {
+                this.outScreenListener(this);
+            }
         }
     }
+
 };
 Car.prototype.render = function (atoms) {
     let this_ = this;
@@ -509,3 +510,4 @@ Speed.prototype.initPreview = function () {
 };
 
 exports.Speed = Speed;
+exports.Car = Car;

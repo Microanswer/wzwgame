@@ -172,6 +172,11 @@ tr td {
     margin: 0 auto;
 }
 
+.game .game-body table [id] {
+    transition-duration: 0ms;
+    -webkit-transition-duration: 0ms;
+}
+
 
 .right {
     margin-left: 15px;

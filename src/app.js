@@ -13,10 +13,11 @@ let launch = new WzwLauncher("#screen", {
 // 注册游戏
 launch.regGame("A", new Games.Tank());
 launch.regGame("B", new Games.Speed());
-launch.regGame("C", new Games.Shooter());
-launch.regGame("D", new Games.Tetris());
-launch.regGame("E", new Games.Snake());
-launch.regGame("F", new Games.Copyor());
+launch.regGame("C", new Games.Speed2());
+launch.regGame("D", new Games.Shooter());
+launch.regGame("E", new Games.Tetris());
+launch.regGame("F", new Games.Snake());
+launch.regGame("G", new Games.Copyor());
 
 let clickers = {};
 
@@ -148,4 +149,4 @@ for (var i = 0; i < btns.length; i++) {
 // 打开界面，500毫秒后开机。
 setTimeout(function () {
     launch.reboot();
-}, 500);
+}, 300);

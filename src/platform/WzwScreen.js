@@ -7,7 +7,7 @@ const DEFAULT_OPTION = {
     atomInset:     2,             // 点阵内空白大小
     atomSpace:     3,             // 点阵间距
     splitPosition: 0.7 ,         // 左右分隔位置，取值范围:0~1
-    splitSize:     1,             // 分割线大小
+    splitSize:     2,             // 分割线大小
     fontSize:      13,            // 文字大小
     fontHeight:    15,            // 文字行高
     background:    "#9facaa",     // 背景色
@@ -226,7 +226,7 @@ function initRender() {
     // 计算分割线位置。
     let drawParam = {};
 
-    drawParam.splitPosition = this.option.width * this.option.splitPosition;
+    drawParam.splitPosition = Math.round(this.option.width * this.option.splitPosition);
     drawParam.atomSpace     = this.option.atomSpace || 1;
     drawParam.atomWidth     = (drawParam.splitPosition - (drawParam.atomSpace * (this.option.atomColCount + 1))) / this.option.atomColCount;
     drawParam.atomHeight    = (this.option.height - (drawParam.atomSpace * (this.option.atomRowCount + 1))) / this.option.atomRowCount;
@@ -294,13 +294,13 @@ function onRender(ctx) {
     // 绘制游戏区 - 左边
     renderAtoms.call(this, ctx);
 
-    // 绘制竖线。
+    // 绘制竖线。 竖线宽度有2，
     let oss = ctx.strokeStyle;
     let osw = ctx.lineWidth;
     ctx.strokeStyle = this.option.color1;
     ctx.lineWidth   = this.option.splitSize;
-    ctx.moveTo(this.drawParam.splitPosition, 0);
-    ctx.lineTo(this.drawParam.splitPosition, this.option.height);
+    ctx.moveTo(this.drawParam.splitPosition + (this.option.splitSize/2), 0);
+    ctx.lineTo(this.drawParam.splitPosition + (this.option.splitSize/2), this.option.height);
     ctx.stroke();
     ctx.strokeStyle = oss;
     ctx.lineWidth   = osw;
@@ -315,25 +315,25 @@ function onRender(ctx) {
 // 绘制点阵区域
 function renderAtoms (ctx) {
     let _this = this;
-    let offsetRow = 0;
-    let offsetCol = 0;
+    let offsetY = 0;
+    let offsetX = 0;
 
     let ofs = ctx.fillStyle;
     let oss = ctx.strokeStyle;
     let olw = ctx.lineWidth;
     WzwScreen.each(_this.option.atomRowCount, function (rowN, rowIndex) {
-        offsetRow += _this.drawParam.atomSpace;
-        offsetCol = 0;
+        offsetY += _this.drawParam.atomSpace;
+        offsetX = 0;
         WzwScreen.each(_this.option.atomColCount, function (colN, colIdex) {
-            offsetCol += _this.drawParam.atomSpace;
+            offsetX += _this.drawParam.atomSpace;
 
             let col = 0;
             if (_this.atoms) {
                 col = _this.atoms[rowIndex][colIdex];
-                renderAtom.call(_this, ctx, col, offsetRow, offsetCol);
+                renderAtom.call(_this, ctx, col, offsetY, offsetX);
             } else {
                 // 在没有初始化atoms的时候也要绘制灰色面板。
-                renderAtom.call(_this, ctx, col, offsetRow, offsetCol);
+                renderAtom.call(_this, ctx, col, offsetY, offsetX);
             }
 
             // 如果有动画数组被赋值，说明希望进行动画，这里进行绘制。
@@ -341,13 +341,13 @@ function renderAtoms (ctx) {
                 let val = _this.animArr[rowIndex][colIdex];
                 // 仅在显示数组值不同于动画数组值，且动画数组值为1 时绘制这个位置。
                 if (val !== col && val === 1) {
-                    renderAtom.call(_this, ctx, val, offsetRow, offsetCol);
+                    renderAtom.call(_this, ctx, val, offsetY, offsetX);
                 }
             }
 
-            offsetCol += _this.drawParam.atomWidth;
+            offsetX += _this.drawParam.atomWidth;
         });
-        offsetRow += _this.drawParam.atomHeight;
+        offsetY += _this.drawParam.atomHeight;
     });
 
     ctx.fillStyle   = ofs;
