@@ -1,18 +1,18 @@
 const DEFAULT_OPTION = {
-    width:         190,           // 游戏屏幕宽度
-    height:        250,           // 游戏屏幕高度
+    width:         193,           // 游戏屏幕宽度
+    height:        255,           // 游戏屏幕高度
     atomRowCount:  21,            // 点阵行数
     atomColCount:  11,            // 点阵列数
-    atomBorder:    1.5,             // 点阵边框大小
+    atomBorder:    2,             // 点阵边框大小
     atomInset:     2,             // 点阵内空白大小
     atomSpace:     3,             // 点阵间距
-    splitPosition: 0.7,           // 左右分隔位置，取值范围:0~1
+    splitPosition: 0.7 ,         // 左右分隔位置，取值范围:0~1
     splitSize:     1,             // 分割线大小
     fontSize:      13,            // 文字大小
     fontHeight:    15,            // 文字行高
     background:    "#9facaa",     // 背景色
     color1:        "#000000",     // 浓颜色
-    color2:        "#8f9997",     // 浅颜色
+    color2:        "#9aa5a3",     // 浅颜色
 };
 
 const CONSTANT = {
@@ -206,6 +206,7 @@ function initScreen () {
     canvasDom.style.margin     = "0";
     canvasDom.style.padding    = "0";
     canvasDom.style.background = this.option.background;
+    canvasDom.style.display    = "block";
     // this.dom.appendChild(canvasDom);
     this.canvasDom = canvasDom;
 
@@ -497,6 +498,17 @@ function getAtomPositionArr() {
     });
 }
 
+/**
+ * 屏幕大小计算器。
+ * 通过传入点阵边框粗细，内边距大小，点阵间隔大小，分割线占比，将给出一个最合适的屏幕区域像素大小值。
+ * @constructor
+ */
+WzwScreen.ScreenSizeCalculator = function (atomSpace, atomBorder, atomInset, atomInner, atomColCount,atomRowCount,splitPosition) {
+    let atomSize = ((atomBorder*2) + (atomInset*2) + atomInner);
+    let height = ((atomSize + atomSpace) * atomRowCount) + atomSpace;
+    let width = (((atomSize + atomSpace) * atomColCount) + atomSpace) / splitPosition;
+    return {width: Math.round(width), height: height};
+};
 
 /**
  * 对象合并方法。
@@ -1166,5 +1178,6 @@ WzwBomb.prototype.render = function (atoms) {
     WzwScreen.mergeArr(this.getCurrentFrame(), atoms, this.offsetRow, this.offsetCol, undefined);
 };
 
+exports.DEFAULT_OPTION = DEFAULT_OPTION;
 exports.WzwBomb   = WzwBomb;
 exports.WzwScreen = WzwScreen;
