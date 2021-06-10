@@ -127,9 +127,10 @@ tr td {
 .game .game-head #screen {
     border: 20px inset;
     border-color: #0a90bf #4dbde3 #59c6e8 #019CD6;
-    width: 196px;
-    height: 256px;
     overflow: hidden;
+    background-color: #9facaa;
+    width: 197px;
+    height: 259px;
 }
 .game .game-head #screen canvas {
     border: 2px solid black;
