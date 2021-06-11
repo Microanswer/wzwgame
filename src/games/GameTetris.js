@@ -530,9 +530,10 @@ function checkSuccessLine() {
                     }
 
                     // 右半部分。
-                    for (let k = half; k < (half + curr) && k < _this.launch.screen.option.atomColCount; k++) {
-                        if (k >= _this.launch.screen.option.atomColCount) k=_this.launch.screen.option.atomColCount-1;
-                        _this.atoms[tRow][k] = 0;
+                    for (let k = half; k < (half + curr); k++) {
+                        let k2 = k;
+                        if (k2 >= _this.launch.screen.option.atomColCount) k2=_this.launch.screen.option.atomColCount-1;
+                        _this.atoms[tRow][k2] = 0;
                     }
                 },
                 end: function (end) {
