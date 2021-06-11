@@ -165,35 +165,11 @@ let STUFS = [
 ];
 /* 定义了各个等级下降的速度， 实际上数字用于settimeout时间间隔 */
 let LEVELS = [800, 700, 600, 550, 500, 450, 400, 350, 300, 250, 200, 150, 130, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 5];
+let LONE_LEVEAL = [100, 100, 110, 110, 120, 120, 130, 140, 150, 160, 170, 180, 180, 190, 190, 200];
 
 /* 急速模式的时间间隔。 */
 let TURBO_TIME_SPACE = 0;
-/* 成绩对应等级 */
-let SCORE_LEVELS = {
-    "50":  1,
-    "100": 2,
-    "150": 3,
-    "200": 4,
-    "250": 5,
-    "300": 6,
-    "350": 7,
-    "400": 8,
-    "450": 9,
-    "500": 10,
-    "550": 11,
-    "600": 12,
-    "700": 13,
-    "850": 14,
-    "1000": 15,
-    "1100": 16,
-    "1300": 17,
-    "1500": 18,
-    "2000": 19,
-    "2500": 20,
-    "3000": 21,
-    "4000": 22,
-    "5000": 23
-};
+
 let STUFF_OFFSET_ROW = -3;
 let STUFF_OFFSET_COL = 3;
 
@@ -472,6 +448,18 @@ function checkSuccessLine() {
         if (isSuccess) {
             _this.succAniming = true;
             _this.score += 1;
+            if (typeof  _this.succLineCount === "undefined") {
+                _this.succLineCount= 1;
+            } else {
+                _this.succLineCount = _this.succLineCount + 1;
+
+                if (_this.succLineCount >= LONE_LEVEAL[_this.level]) {
+                    _this.level = _this.level + 1;
+                    _this.succLineCount = 0;
+                    onLevelChange.call(_this, _this.level);
+                }
+
+            }
             successLine.push(i);
         }
     }
@@ -484,56 +472,21 @@ function checkSuccessLine() {
         }
         onScoreChange.call(_this, _this.score);
 
-        /*提升等级*/
-        let newLevel = SCORE_LEVELS[String(_this.score)];
-        if (newLevel > _this.level) {
-            _this.level = newLevel;
-            onLevelChange.call(_this, _this.level);
-        }
-
-
-        // 执行行消减动画。
-        // let ended = false;
-        // let onAnimEnd = function () {
-        //     if (ended) return;
-        //     ended = true;
-        //
-        //     /*动画完成后重整数组，将消除的行上面的依次向下整理*/
-        //     while (successLine.length > 0) {
-        //         let rowm = successLine.shift();
-        //         for (let row = rowm; row >= 1; row--) {
-        //             let lastRow = row - 1;
-        //             _this.atomsed[row] = [].concat(_this.atomsed[lastRow]);
-        //             if (lastRow === 0) {
-        //                 _this.atomsed[lastRow] = [];
-        //                 WzwScreen.each(_this.launch.screen.option.atomColCount, function (num, numIndex) {
-        //                     _this.atomsed[lastRow][numIndex] = 0;
-        //                 });
-        //
-        //             }
-        //         }
-        //     }
-        //     _this.atoms = arrCopy(_this.atomsed);
-        //     _this.succAniming = false;
-        // };
-
-        let half = Math.floor(_this.launch.screen.option.atomColCount/2);
-
         // 动画消减行。
         function animCut(tRow, back) {
+            let half = Math.floor(_this.launch.screen.option.atomColCount/2);
             WzwScreen.scroll(0, half, {
                 goo: function (curr) {
                     // 左半部分动画
                     for (let j = half; j >= half - curr; j--) {
-                        if (j < 0) j = 0;
+                        if (j < 0) {break;}
                         _this.atoms[tRow][j] = 0;
                     }
 
                     // 右半部分。
                     for (let k = half; k < (half + curr); k++) {
-                        let k2 = k;
-                        if (k2 >= _this.launch.screen.option.atomColCount) k2=_this.launch.screen.option.atomColCount-1;
-                        _this.atoms[tRow][k2] = 0;
+                        if (k > _this.launch.screen.option.atomColCount-1) break;
+                        _this.atoms[tRow][k] = 0;
                     }
                 },
                 end: function (end) {
