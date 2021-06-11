@@ -1,9 +1,9 @@
 const { Car, NAME_FREE, Road } = require("./GameSpeed");
 const { WzwScreen, WzwBomb } = require("../platform/WzwScreen");
 
-const LEVEL_TIMESPACE = [150, 140, 130, 120, 110, 100, 90, 80, 70, 60 ,50, 40,];
+const LEVEL_TIMESPACE = [150, 140, 130, 120, 110, 100, 90, 80, 70, 60 ,50, 40];
 const LEVEL_COUNT = [50, 50, 60, 60, 70, 70, 80, 80, 90, 90];
-const TURBO_TINESPACE = 16;
+const TURBO_TINESPACE = 18;
 const GAME_STATUS = {
     STATUS_UNSET: 0,
     STATUS_PAUSE: 1,
