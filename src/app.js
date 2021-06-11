@@ -17,7 +17,7 @@ let letters = "ABCDEFGHIJKLMN".split("");
 let games = [
     new Games.Tank(),
     new Games.Speed(),
-    // new Games.Speed2(),
+    new Games.Speed2(),
     new Games.Shooter(),
     new Games.Tetris(),
     new Games.Snake(),

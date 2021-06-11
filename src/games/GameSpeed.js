@@ -1,5 +1,6 @@
 let { WzwScreen, WzwBomb } = require("../platform/WzwScreen");
 
+const NAME_FREE = "free";
 const NAME_ME = "me";
 const NAME_OTHER = "other";
 
@@ -38,6 +39,7 @@ function Car(name, offsetRow, offsetCol, wzwScreen) {
     this.offsetCol = offsetCol;
     this.offsetRow = offsetRow;
     this.wzwScreen = wzwScreen;
+    this.screen = wzwScreen;
     this.name = name;
 }
 
@@ -46,12 +48,30 @@ Car.prototype.setOnOutScreenListener = function (listener) {
 };
 
 Car.prototype.left = function () {
+    if (this.name === NAME_FREE) {
+
+        if (this.offsetCol - 1 >= 0) {
+            this.offsetCol = this.offsetCol - 1;
+        }
+
+        return;
+    }
+
     if (this.offsetCol-3 > 0) {
         this.offsetCol = this.offsetCol - 3;
     }
 };
 
 Car.prototype.right = function () {
+
+    if (this.name === NAME_FREE) {
+
+        if (this.offsetCol + 1 <= this.screen.option.atomColCount - 3) {
+            this.offsetCol = this.offsetCol + 1;
+        }
+
+        return;
+    }
     if (this.offsetCol + 3 <= 7) {
         this.offsetCol = this.offsetCol + 3;
     }
@@ -169,9 +189,9 @@ Speed.prototype.getPreviewAtoms = function () {
  */
 Speed.prototype.useNewPlayer = function () {
     let p = undefined;
-    for (let i = 0; i < this.players.length; i++) {
-        if (this.players[i][0] === 1) {
-            this.players[i][0] = 0;this.players[i][1] = 0;this.players[i][2] = 0;this.players[i][3] = 0;
+    for (let i = 0; i < this.life.length; i++) {
+        if (this.life[i][0] === 1) {
+            this.life[i][0] = 0;this.life[i][1] = 0;this.life[i][2] = 0;this.life[i][3] = 0;
             this.turbo = false;
             p = new Car(NAME_ME, this.wzwScreen.option.atomRowCount - 6, this.wzwScreen.option.atomColCount - 7, this.wzwScreen);
             break;
@@ -210,7 +230,7 @@ Speed.prototype.onLaunch = function () {
     this.best = WzwScreen.storeGet("speed_best") || 0;
     /** @type {WzwBomb} */
     this.boom = undefined;
-    this.players = [
+    this.life = [
         [0,0,0,0],
         [1,1,1,1],
         [1,1,1,1],
@@ -337,8 +357,8 @@ Speed.prototype.onUpdate = function () {
 
 // 【生命周期函数】游戏过程中，此方法会不同的被调用。返回一个二维数组，此二维数组会渲染到右侧的小点阵区域。
 Speed.prototype.onUpdateStatus = function () {
-    if (!this.players) return ;
-    return this.players;
+    if (!this.life) return ;
+    return this.life;
 };
 
 // 【生命周期函数】游戏结束时调用。比如:玩着玩着用户按一下复位按钮，此时动画执行到满屏，会调用该函数，游戏应该清除自己的状态。
@@ -511,3 +531,5 @@ Speed.prototype.initPreview = function () {
 
 exports.Speed = Speed;
 exports.Car = Car;
+exports.Road = Road;
+exports.NAME_FREE = NAME_FREE;
