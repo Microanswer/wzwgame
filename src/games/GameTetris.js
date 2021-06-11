@@ -475,28 +475,33 @@ function checkSuccessLine() {
         // 动画消减行。
         function animCut(tRow, back) {
             let half = Math.floor(_this.launch.screen.option.atomColCount/2);
-            WzwScreen.scroll(0, half, {
-                goo: function (curr) {
-                    // 左半部分动画
-                    for (let j = half; j >= half - curr; j--) {
-                        if (j < 0) {break;}
-                        _this.atoms[tRow][j] = 0;
-                    }
+            function ct(curr) {
+                // 左半部分动画
+                for (let j = half; j >= half - curr; j--) {
+                    let j2 = j;
+                    if (j2 < 0) j2 = 0;
+                    _this.atoms[tRow][j2] = 0;
+                }
 
-                    // 右半部分。
-                    for (let k = half; k < (half + curr); k++) {
-                        if (k > _this.launch.screen.option.atomColCount-1) break;
-                        _this.atoms[tRow][k] = 0;
+                // 右半部分。
+                for (let k = half; k < (half + curr); k++) {
+                    let k2 = k;
+                    if (k2 > _this.launch.screen.option.atomColCount-1) {
+                        k2 = _this.launch.screen.option.atomColCount-1;
                     }
-                },
-                end: function (end) {
+                    _this.atoms[tRow][k] = 0;
+                }
+            }
+            WzwScreen.scroll(0, half, {
+                goo: function (curr) {ct(curr);},
+                end: function (end) {ct(end);
                     // 一行被消除完。
                     for (let row = tRow; row >= 1; row--) {
                         let lastRow = row - 1;
-                        _this.atoms[row] = [].concat(_this.atomsed[lastRow]);
+                        _this.atoms[row]   = [].concat(_this.atomsed[lastRow]);
                         _this.atomsed[row] = [].concat(_this.atomsed[lastRow]);
                         if (lastRow === 0) {
-                            _this.atoms[lastRow] = [];
+                            _this.atoms[lastRow]   = [];
                             _this.atomsed[lastRow] = [];
                             WzwScreen.each(_this.launch.screen.option.atomColCount, function (num, numIndex) {
                                 _this.atoms[lastRow][numIndex] = 0;
@@ -507,7 +512,7 @@ function checkSuccessLine() {
 
                     back && back();
                 },
-            }, 220)
+            }, 230);
         }
 
 
