@@ -10,14 +10,22 @@ let launch = new WzwLauncher("#screen", {
     testspan: document.querySelector("#testspan")
 });
 
+
+
 // 注册游戏
-launch.regGame("A", new Games.Tank());
-launch.regGame("B", new Games.Speed());
-launch.regGame("C", new Games.Speed2());
-launch.regGame("D", new Games.Shooter());
-launch.regGame("E", new Games.Tetris());
-launch.regGame("F", new Games.Snake());
-launch.regGame("G", new Games.Copyor());
+let letters = "ABCDEFGHIJKLMN".split("");
+let games = [
+    new Games.Tank(),
+    new Games.Speed(),
+    // new Games.Speed2(),
+    new Games.Shooter(),
+    new Games.Tetris(),
+    new Games.Snake(),
+    new Games.Copyor(),
+];
+for (let i = 0; i < games.length; i++) {
+    launch.regGame(letters[i], games[i]);
+}
 
 let clickers = {};
 

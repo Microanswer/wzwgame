@@ -167,7 +167,7 @@ let STUFS = [
 let LEVELS = [800, 700, 600, 550, 500, 450, 400, 350, 300, 250, 200, 150, 130, 100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 5];
 
 /* 急速模式的时间间隔。 */
-let TURBO_TIME_SPACE = 3;
+let TURBO_TIME_SPACE = 0;
 /* 成绩对应等级 */
 let SCORE_LEVELS = {
     "50":  1,
@@ -493,55 +493,84 @@ function checkSuccessLine() {
 
 
         // 执行行消减动画。
-        let ended = false;
-        let onAnimEnd = function () {
-            if (ended) return;
-            ended = true;
+        // let ended = false;
+        // let onAnimEnd = function () {
+        //     if (ended) return;
+        //     ended = true;
+        //
+        //     /*动画完成后重整数组，将消除的行上面的依次向下整理*/
+        //     while (successLine.length > 0) {
+        //         let rowm = successLine.shift();
+        //         for (let row = rowm; row >= 1; row--) {
+        //             let lastRow = row - 1;
+        //             _this.atomsed[row] = [].concat(_this.atomsed[lastRow]);
+        //             if (lastRow === 0) {
+        //                 _this.atomsed[lastRow] = [];
+        //                 WzwScreen.each(_this.launch.screen.option.atomColCount, function (num, numIndex) {
+        //                     _this.atomsed[lastRow][numIndex] = 0;
+        //                 });
+        //
+        //             }
+        //         }
+        //     }
+        //     _this.atoms = arrCopy(_this.atomsed);
+        //     _this.succAniming = false;
+        // };
 
-            /*动画完成后重整数组，将消除的行上面的依次向下整理*/
-            while (successLine.length > 0) {
-                let rowm = successLine.shift();
-                for (let row = rowm; row >= 1; row--) {
-                    let lastRow = row - 1;
-                    _this.atomsed[row] = [].concat(_this.atomsed[lastRow]);
-                    if (lastRow === 0) {
-                        _this.atomsed[lastRow] = [];
-                        WzwScreen.each(_this.launch.screen.option.atomColCount, function (num, numIndex) {
-                            _this.atomsed[lastRow][numIndex] = 0;
-                        });
+        let half = Math.floor(_this.launch.screen.option.atomColCount/2);
 
+        // 动画消减行。
+        function animCut(tRow, back) {
+            WzwScreen.scroll(0, half, {
+                goo: function (curr) {
+                    // 左半部分动画
+                    for (let j = half; j >= half - curr; j--) {
+                        if (j < 0) j = 0;
+                        _this.atoms[tRow][j] = 0;
                     }
-                }
-            }
-            _this.atoms = arrCopy(_this.atomsed);
-            _this.succAniming = false;
-        };
 
-        /* 在数组里将消除的行全部置为0，通过此操作使得界面上的行有个从左到右消减的动画 */
-        WzwScreen.scroll(0, _this.atoms[0].length - 1, {
-            goo: function (process) {
-                let l = _this.atoms[0].length;
-                /*scroll方法有bug吗，process应该在to范围内啊，但是出现了超过to的现象，所以这里判断一下*/
-                process = process >= l ? l : process;
-                for (let j = 0; j < process; j++) {
-                    WzwScreen.each(successLine, function (index, value) {
-                        _this.atoms[index][j] = 0;
-                    });
-                }
-            },
-            end: function (end) {
-                for (let j = 0; j < _this.atoms[0].length; j++) {
-                    WzwScreen.each(successLine, function (index, value) {
-                        _this.atoms[index][j] = 0;
-                    });
-                }
+                    // 右半部分。
+                    for (let k = half; k < (half + curr) && k < _this.launch.screen.option.atomColCount; k++) {
+                        if (k >= _this.launch.screen.option.atomColCount) k=_this.launch.screen.option.atomColCount-1;
+                        _this.atoms[tRow][k] = 0;
+                    }
+                },
+                end: function (end) {
+                    // 一行被消除完。
+                    for (let row = tRow; row >= 1; row--) {
+                        let lastRow = row - 1;
+                        _this.atoms[row] = [].concat(_this.atomsed[lastRow]);
+                        _this.atomsed[row] = [].concat(_this.atomsed[lastRow]);
+                        if (lastRow === 0) {
+                            _this.atoms[lastRow] = [];
+                            _this.atomsed[lastRow] = [];
+                            WzwScreen.each(_this.launch.screen.option.atomColCount, function (num, numIndex) {
+                                _this.atoms[lastRow][numIndex] = 0;
+                                _this.atomsed[lastRow][numIndex] = 0;
+                            });
+                        }
+                    }
 
-                /* 将消除的行剩下的重整 */
-                setTimeout(function () {
-                    onAnimEnd();
-                }, 50);
+                    back && back();
+                },
+            }, 220)
+        }
+
+
+        function startCut() {
+            if (successLine.length > 0) {
+                animCut(successLine.pop(), startCut);
+                for (let i = 0; i < successLine.length; i++) {
+                    successLine[i] = successLine[i] + 1;
+                }
+            } else {
+                // 动画完了。
+                _this.succAniming = false;
             }
-        }, 240);
+        }
+
+        startCut();
+
     }
 }
 
