@@ -11,7 +11,7 @@ const DEFAULT_OPTION = {
     fontSize:      13,            // 文字大小
     fontHeight:    15,            // 文字行高
     background:    "#9facaa",     // 背景色
-    color1:        "#000000",     // 浓颜色
+    color1:        "#191919",     // 浓颜色
     color2:        "#9aa5a3",     // 浅颜色
 };
 
