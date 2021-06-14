@@ -10,8 +10,6 @@ let launch = new WzwLauncher("#screen", {
     testspan: document.querySelector("#testspan")
 });
 
-
-
 // 注册游戏
 let letters = "ABCDEFGHIJKLMN".split("");
 let games = [
@@ -153,6 +151,17 @@ for (var i = 0; i < btns.length; i++) {
     });
 }
 
+let tipdom = document.querySelector("#zjtip");
+if (tipdom){
+    tipdom.innerText = "转载请注明出处。";
+}
+
+window.author = function() {
+    console.log("Design By Microanswer. WebSite: https://www.microanswer.cn");
+    if (tipdom) {
+        tipdom.style.color = "#FFFFFF";
+    }
+};
 
 // 打开界面，500毫秒后开机。
 setTimeout(function () {
