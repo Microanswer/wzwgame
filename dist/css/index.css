@@ -18,13 +18,13 @@ tr td {
 }
 .btn {
     outline: none;
-    border: none;
+    border: 1px solid #ddc905;
     border-radius: 50%;
     background: linear-gradient(145deg, #decb02, #c1b002);
     transition-duration: 30ms;
 
-    width: 46px;
-    height: 46px;
+    width: 50px;
+    height: 50px;
     cursor: pointer;
     display-role: button;
 
@@ -47,8 +47,8 @@ tr td {
     width: 30px;
 }
 .btn.big {
-    width: 73px;
-    height: 73px;
+    width: 80px;
+    height: 80px;
     box-shadow:  8px 8px 20px #555555,
     -8px -8px 20px #7ed2d2;
 }
@@ -172,11 +172,46 @@ tr td {
     margin: 0 auto;
 }
 
-.game .game-body table [id] {
+.game .game-body [key] {
     transition-duration: 0ms;
     -webkit-transition-duration: 0ms;
 }
 
+.game .game-body .controller-flex .controller-div{
+    transition-duration: 0ms;
+    -webkit-transition-duration: 0ms;
+}
+.game .game-body .controller-flex {
+    display: flex;
+    display: -webkit-flex;
+
+    justify-content: space-between;
+    -webkit-justify-content: space-between;
+
+    margin: 0 30px;
+}
+
+.game .game-body .controller-right{
+    display: flex;
+    display: -webkit-flex;
+    align-items: center;
+}
+.game .game-body .controller-left{
+    transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+}
+
+.game .game-body .controller-left-row .btn-parent .btn {
+    transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+}
+.game .game-body .controller-left-row .btn-parent {
+    padding: 15px;
+}
+.game .game-body .controller-left-row {
+    display: -webkit-flex;
+    display: flex;
+}
 
 .right {
     margin-left: 15px;
@@ -240,6 +275,11 @@ tr td {
 
     .game .game-head .leftdoc {margin-right: 6px;}
     .game .game-head .rightdoc {margin-left: 6px;}
+
+    .game .game-body {
+        padding:  0 0 90px 0;
+        text-align: center;
+    }
 
     .border-bottom-right-12 {
         border-bottom-right-radius: 0!important;

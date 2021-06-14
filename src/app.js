@@ -49,11 +49,13 @@ function onKeyDown(key) {
 }
 
 function upKey(key) {
-    let btn = document.querySelector("#" + key);
+    let btn = document.querySelector("[key='" + key+"']");
+    if (btn.tagName === "DIV") btn = btn.children[0];
     btn.className = btn.className.replace(/ active/g, "");
 }
 function downKey(key) {
-    let btn = document.querySelector("#" + key);
+    let btn = document.querySelector("[key='" + key + "']");
+    if (btn.tagName === "DIV") btn = btn.children[0];
     if (btn.className.indexOf("active") < 0) {
         btn.className = btn.className + " active";
     }
@@ -128,10 +130,10 @@ if (u.indexOf('Android') > -1 || u.indexOf('Linux') > -1) {
     downevent = "touchstart";
     upevent = "touchend"
 }
-var btns = document.querySelectorAll("button.btn[id]");
+var btns = document.querySelectorAll(".controller-div");
 for (var i = 0; i < btns.length; i++) {
     btns[i].addEventListener(downevent,  function (e) {
-        onKeyDown(this.id);
+        onKeyDown(this.getAttribute("key"));
         e.stopPropagation();
         if(e.preventDefault){
             e.preventDefault();
@@ -141,7 +143,7 @@ for (var i = 0; i < btns.length; i++) {
         }
     });
     btns[i].addEventListener(upevent,    function (e) {
-        onKeyUp(this.id); e.stopPropagation();
+        onKeyUp(this.getAttribute("key")); e.stopPropagation();
         if(e.preventDefault){
             e.preventDefault();
         }else{
