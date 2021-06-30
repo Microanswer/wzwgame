@@ -14,6 +14,12 @@ const TURBO_TINESPACE = 30;
 // 正常游戏的时间长度
 const TIMESPACE = 320;
 
+let gif = 0;
+
+window.putGif = function (v) {
+    gif = gif + v;
+};
+
 /**
  * 蛇节点类。
  * @param offsetRow
@@ -44,6 +50,15 @@ SnakeNode.prototype.update = function () {
     if (!this.food) {
         if (this.next) {
             this.next.update();
+        } else {
+
+            // 没有更多的节点了。
+            // 看看有没有礼包节点。
+            if (gif > 0) {
+                gif = gif - 1;
+                this.next = new SnakeNode(this.offsetRow, this.offsetCol, this.direction, this, undefined);
+            }
+
         }
     } else {
 
@@ -75,7 +90,7 @@ SnakeNode.prototype.update = function () {
             case DIRECTION.RIGHT:  this.offsetCol+=1;break;
         }
     }
-}
+};
 
 SnakeNode.prototype.applyAtoms = function (atoms) {
     if (this.next) {
@@ -85,7 +100,7 @@ SnakeNode.prototype.applyAtoms = function (atoms) {
     try {
         atoms[this.offsetRow][this.offsetCol] = 1;
     }catch (igonre) {/*这里一定会产生下表越界错误，但没关系，忽略他。*/}
-}
+};
 
 // 将此节点转弯。
 SnakeNode.prototype.turnTo = function (direction) {
@@ -101,7 +116,7 @@ SnakeNode.prototype.turnTo = function (direction) {
             this.nextDirection = direction;
         }
     }
-}
+};
 
 // 判断某点是否在当前节点其当前的子节点中。
 SnakeNode.prototype.isAtomsIn = function(row, col) {
@@ -113,7 +128,7 @@ SnakeNode.prototype.isAtomsIn = function(row, col) {
     } else {
         return false;
     }
-}
+};
 
 function Snake() {
 
@@ -143,7 +158,7 @@ Snake.prototype.getPreviewAtoms = function () {
 
 // 【生命周期函数】当游戏启动时调用。
 Snake.prototype.onLaunch = function () {
-
+    gif = 0;
     let headRow = parseInt(this.launch.screen.option.atomRowCount / 2);
     let headCol = parseInt(this.launch.screen.option.atomColCount / 2);
 
@@ -484,7 +499,7 @@ Snake.prototype.makeFood = function () {
     }
 
     return fd;
-}
+};
 
 Snake.prototype.uiGameover = function () {
     let _this = this;

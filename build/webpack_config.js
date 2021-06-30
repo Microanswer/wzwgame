@@ -49,10 +49,13 @@ function getWebpackCfgOf(env) {
                 useCNZZ:  fs.existsSync("C:/microanswer") && env === "production"
             }),
             new CopyWebpackPlugin({patterns: [
-                {from: pathOf("public/index.css"), to: "css"},
-                {from: pathOf("public/left.png"),  to: "img"},
-                {from: pathOf("public/right.png"), to: "img"},
-            ]}),
+                {from: "public/index.css", to: "css"},
+                {from: "public/left.png",  to: "img"},
+                {from: "public/right.png", to: "img"},
+                {from: "public/sound/*", to: "sound/[name].[ext]"}
+            ], options: {
+                // context: pathOf(".")
+            }}),
             new webpack.BannerPlugin({
                 banner: "By Microanswer.  url:" + packageJson.url + " version:" + packageJson.version
             })
