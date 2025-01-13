@@ -1,5 +1,5 @@
 let getWebpackCfgOf = require("./webpack_config");
-let DevServer       = require("webpack-dev-server");
+let DevServer           = require("webpack-dev-server");
 let webpack         = require("webpack");
 let port            = 5686;
 
@@ -21,12 +21,12 @@ cfg.plugins = (cfg.plugins || []).concat(
 let devServerCfg = {
     publicPath: "/",
 
-    contentBase: false,
+    contentBase: "./public/",
     index: "index.html",
     compress: true,
     port: port,
     hot: true,
-    open: true,
+    open: false,
     stats: {
         colors: true
     }

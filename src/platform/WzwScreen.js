@@ -1,3 +1,4 @@
+const {getResource} = require("./ResourceLoader");
 const DEFAULT_OPTION = {
     width:         193,           // 游戏屏幕宽度
     height:        255,           // 游戏屏幕高度
@@ -6,13 +7,13 @@ const DEFAULT_OPTION = {
     atomBorder:    2,             // 点阵边框大小
     atomInset:     2,             // 点阵内空白大小
     atomSpace:     3,             // 点阵间距
-    splitPosition: 0.7 ,         // 左右分隔位置，取值范围:0~1
+    splitPosition: 0.7 ,          // 左右分隔位置，取值范围:0~1
     splitSize:     2,             // 分割线大小
     fontSize:      13,            // 文字大小
     fontHeight:    15,            // 文字行高
     background:    "#9facaa",     // 背景色
-    color1:        "#191919",     // 浓颜色
-    color2:        "#9aa5a3",     // 浅颜色
+    color1:        "#000000",     // 浓颜色
+    color2:        "#949f9d",     // 浅颜色
 };
 
 const CONSTANT = {
@@ -23,7 +24,12 @@ const CONSTANT = {
         pause: "PAUSE",
         fps:   "FPS"
     }
-}
+};
+
+// 声音图标
+let SoundIcon = null;
+
+
 
 /**
  * 游戏显示屏类。所以游戏都通过使用这个显示器类来实现游戏内容。
@@ -173,6 +179,13 @@ WzwScreen.prototype.setScore = function (score) {
 WzwScreen.prototype.setPause = function (pause) {
     this.paused = pause;
 }
+
+/**
+ * 设置声音开启或关闭
+ */
+WzwScreen.prototype.toggleSound = function () {
+    this.soundon = !this.soundon;
+}
 WzwScreen.prototype.setBest = function (best) {
     this.best = best;
 }
@@ -191,11 +204,12 @@ function init() {
     // 初始化状态数据。
     _this.statusAtoms = undefined;
 
-    this.fps    = 60;
-    this.score  = 0;
-    this.paused = false;
-    this.level  = 0;
-    this.best   = 0;
+    this.fps     = 60;
+    this.score   = 0;
+    this.paused  = false;
+    this.soundon = false; // 是否开启声音
+    this.level   = 0;
+    this.best    = 0;
 }
 
 // 初始化屏幕
@@ -422,6 +436,18 @@ function renderBoard (ctx) {
     ctx.font = _this.drawParam.fontItalic;
     ctx.fillText(CONSTANT.STRINGS.pause, fontOffsetX, fontOffsetY += _this.option.fontHeight);
 
+    // 绘制声音开关状态。
+    let soundImg = getResource("./soundon.svg");
+    if (soundImg) {
+        fontOffsetY += 10;
+        if (_this.soundon) {
+            ctx.filter = "";
+        } else {
+            ctx.filter = "opacity(15%)";
+        }
+        ctx.drawImage(soundImg, fontOffsetX, fontOffsetY, 18, 18);
+        ctx.filter = "opacity(100%)";
+    }
 
     // 绘制fps
     ctx.strokeStyle = ctx.fillStyle = _this.option.color1;

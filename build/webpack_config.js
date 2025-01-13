@@ -24,7 +24,7 @@ function getWebpackCfgOf(env) {
             app: pathOf("src/app.js")
         },
         output: {
-            filename: "js/app.js",
+            filename: "app.js",
             path: pathOf("dist"),
             publicPath: "./"
         },
@@ -49,12 +49,9 @@ function getWebpackCfgOf(env) {
                 useCNZZ:  fs.existsSync("C:/microanswer") && env === "production"
             }),
             new CopyWebpackPlugin({patterns: [
-                {from: "public/index.css", to: "css"},
-                {from: "public/left.png",  to: "img"},
-                {from: "public/right.png", to: "img"},
-                {from: "public/sound/*", to: "sound/[name].[ext]"}
+                {from: "./**/*", to: "./",context: pathOf("./public/")},
             ], options: {
-                // context: pathOf(".")
+
             }}),
             new webpack.BannerPlugin({
                 banner: "By Microanswer.  url:" + packageJson.url + " version:" + packageJson.version

@@ -187,6 +187,13 @@ function onKeyDown(key) {
  * @param key
  */
 function onKeyUp(key) {
+
+    // 开关声音，无论开关机状态，都可以控制。
+    if ("voice" === key) {
+        this.screen.toggleSound();
+        return;
+    }
+
     // 关机状态按开关
     if (this.status === WzwLauncher.STATUS.OFFED) {
         if ("onoff" === key) {

@@ -11,7 +11,7 @@ let launch = new WzwLauncher("#screen", {
 });
 
 // 注册游戏
-let letters = "ABCDEFGHIJKLMN".split("");
+let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 let games = [
     new Games.Tank(),
     new Games.Speed(),
