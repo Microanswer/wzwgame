@@ -22,7 +22,6 @@ let devServerCfg = {
     publicPath: "/",
 
     contentBase: "./public/",
-    index: "index.html",
     compress: true,
     port: port,
     hot: true,

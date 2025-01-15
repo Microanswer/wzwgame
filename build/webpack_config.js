@@ -45,7 +45,7 @@ function getWebpackCfgOf(env) {
         plugins: [
             new HtmlWebpackPlugin({
                 filename: "index.html",
-                template: pathOf("public/index.html"),
+                template: pathOf("src/index.html"),
                 useCNZZ:  fs.existsSync("C:/microanswer") && env === "production"
             }),
             new CopyWebpackPlugin({patterns: [

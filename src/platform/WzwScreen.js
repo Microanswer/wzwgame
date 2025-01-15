@@ -1,4 +1,8 @@
 const {getResource} = require("./ResourceLoader");
+const SoundPlayer = require("./SoundPlayer");
+const AUDIOIDS = {
+    BG: "bg",
+};
 const DEFAULT_OPTION = {
     width:         193,           // 游戏屏幕宽度
     height:        255,           // 游戏屏幕高度
@@ -75,6 +79,9 @@ function WzwScreen(dom, option) {
     this.option = WzwScreen.assign({}, DEFAULT_OPTION, option || {});
 
     this.testspan = this.option.testspan;
+
+    this.audio = new SoundPlayer();
+    this.audio.loadSound(AUDIOIDS.BG, "./sound/boot_bg.ogg");
 
     init.call(this);             // 初始化数据。
     initScreen.call(this);       // 初始化绘画板。
@@ -1204,6 +1211,7 @@ WzwBomb.prototype.render = function (atoms) {
     WzwScreen.mergeArr(this.getCurrentFrame(), atoms, this.offsetRow, this.offsetCol, undefined);
 };
 
+exports.AUDIO = AUDIOIDS;
 exports.DEFAULT_OPTION = DEFAULT_OPTION;
 exports.WzwBomb   = WzwBomb;
 exports.WzwScreen = WzwScreen;

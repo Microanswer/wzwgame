@@ -1,4 +1,4 @@
-let { WzwScreen } = require("./WzwScreen");
+let { WzwScreen, AUDIO } = require("./WzwScreen");
 
 /**
  * 游戏启动器。在玩家打开页面时(就认为在开机游戏机)运行的就是这个启动器，启动器里有很多个游戏可以选择， 每个游戏提供了序号，预览动画。
@@ -134,6 +134,7 @@ WzwLauncher.prototype.reboot = function () {
             _this.status = WzwLauncher.STATUS.BOOTED;
         }
     });
+    _this.screen.audio.play(AUDIO.BG, 0);
 }
 
 WzwLauncher.prototype.turnOff = function() {

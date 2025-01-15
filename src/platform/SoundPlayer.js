@@ -3,6 +3,11 @@
  * @constructor
  */
 function SoundPlayer() {
+
+    /**
+     *
+     * @type {{[p: string]: HTMLAudioElement}}
+     */
     this.soundList = {};
 }
 
@@ -16,17 +21,18 @@ SoundPlayer.prototype.loadSound = function (id, src) {
     audio.controls = undefined;
     audio.autoplay = false;
     this.soundList[id] = audio;
-    document.body.append(audio);
 };
 
 /**
  * 播放指定声音
  * @param id
- * @param loop {?boolean}
+ * @param volume {number}
+ * @param loop {boolean?}
  */
-SoundPlayer.prototype.play = function (id, loop) {
+SoundPlayer.prototype.play = function (id, volume, loop) {
     let audio = this.soundList[id];
     audio.loop = !!loop;
+    audio.volume = volume;
     audio.play();
 };
 
