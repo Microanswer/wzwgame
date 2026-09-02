@@ -1,4 +1,4 @@
-let { WzwScreen } = require("../platform/WzwScreen");
+let { WzwScreen, AUDIO } = require("../platform/WzwScreen");
 let GAME_STATUS = {
     PLAYING: "playing",  // 正在游戏中
     PAUSE:   "pause",    // 暂停了
@@ -263,6 +263,9 @@ Tetris.prototype.onUpdate = function () {
         (now - _this.gameLastTime) >= (_this.turbo ? TURBO_TIME_SPACE : LEVELS[_this.level]) &&
         (!_this.succAniming) // 正在进行行消减动画时不下落。
     ) {
+        if (_this.turbo) {
+            _this.launch.screen.playAudio(AUDIO.BTN_ROTATE, 1);
+        }
 
         if (_this.status === GAME_STATUS.PLAYING) {
 
@@ -306,6 +309,7 @@ Tetris.prototype.onUpdate = function () {
                 }
 
                 if (isGrounded){
+                    _this.launch.screen.playAudio(AUDIO.Enemy_die, 1);
                     // 已经触底了。讲当前全部材料保存。
                     _this.atomsed = arrCopy(_this.atoms);
                     // 去除正在下降的材料。
@@ -378,15 +382,19 @@ Tetris.prototype.onKeyDown = function(key) {
     } else if ("left" === key) {
         // 左移动
         if (_this.status === GAME_STATUS.PAUSE) return;
+        _this.launch.screen.playAudio(AUDIO.BTN_ROTATE, 1);
         _moveCurrStuff.call(_this, -1);
     } else if ("right" === key) {
         if (_this.status === GAME_STATUS.PAUSE) return;
+        _this.launch.screen.playAudio(AUDIO.BTN_ROTATE, 1);
         _moveCurrStuff.call(_this, 1);
     } else if ("rotate" === key || "up" === key) {
         if (_this.status === GAME_STATUS.PAUSE) return;
+        _this.launch.screen.playAudio(AUDIO.Tetris_change, 1);
         rotateStuff.call(_this);
     } else if ("down" === key) {
         if (_this.status === GAME_STATUS.PAUSE) return;
+        _this.launch.screen.playAudio(AUDIO.BTN_ROTATE, 1);
         _this.turboModeON();
     }
 };
@@ -403,6 +411,7 @@ Tetris.prototype.onDestroy = function () {
 // 游戏结束时执行此方法
 function doGameOver() {
     let _this = this;
+    _this.launch.screen.playAudio(AUDIO.GAME_OVER, 1);
     _this.launch.screen.playAnim(WzwScreen.ANIM.B2T, function (animName, index) {
         if (index === 0) {
             _this.onDestroy();
@@ -469,6 +478,7 @@ function checkSuccessLine() {
         /* 如果一次消了4行，再加1分 */
         if (successLine.length >= 4) {
             _this.score += 1;
+            _this.launch.screen.playAudio(AUDIO.BTN_START, 1);
         }
         onScoreChange.call(_this, _this.score);
 

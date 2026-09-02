@@ -1,37 +1,10 @@
 let getWebpackCfgOf = require("./webpack_config");
-let DevServer           = require("webpack-dev-server");
-let webpack         = require("webpack");
-let port            = 5686;
+let DevServer = require("webpack-dev-server");
+let webpack = require("webpack");
+let path = require("path");
+let port = 5686;
 
 let cfg = getWebpackCfgOf("development");
-
-Object.getOwnPropertyNames((cfg.entry || {})).map(function (name) {
-    cfg.entry[name] = []
-        .concat("webpack/hot/dev-server")
-        .concat("webpack-dev-server/client?http://localhost:" + port)
-        .concat(cfg.entry[name])
-});
-
-cfg.plugins = (cfg.plugins || []).concat(
-    new webpack.optimize.OccurrenceOrderPlugin(),
-    //添加HMR插件
-    new webpack.HotModuleReplacementPlugin(),
-);
-
-let devServerCfg = {
-    publicPath: "/",
-
-    contentBase: "./public/",
-    compress: true,
-    port: port,
-    hot: true,
-    open: false,
-    stats: {
-        colors: true
-    }
-};
-
-let server = new DevServer(webpack(cfg), devServerCfg);
 
 // favicon.ico 图标的base64
 let faviconBase64 = /*data:image/x-icon;base64,*/
@@ -76,10 +49,31 @@ let faviconBase64 = /*data:image/x-icon;base64,*/
 
 let faviconBuffer = Buffer.from(faviconBase64, "base64");
 
-server.use("/favicon.ico", (req, res) => {
-    res.header({"Content-Type": "image/x-icon"});
-    res.end(faviconBuffer);
-});
-server.listen(port, err => {
+/** @type {import("webpack-dev-server").Configuration} */
+let devServerCfg = {
+    compress: true,
+    port: port,
+    hot: true,
+    open: false,
+    static: [
+        {
+            publicPath: "/",
+            directory: path.join(__dirname, "..", "public")
+        }
+    ],
+    setupMiddlewares: (middlewares, devServer) => {
+        devServer.app.get("/favicon.ico", (req, res) => {
+            res.header({ "Content-Type": "image/x-icon" });
+            res.end(faviconBuffer);
+        });
+        return middlewares;
+    }
+};
+
+let server = new DevServer(devServerCfg, webpack(cfg));
+
+server.start().then(() => {
     console.log('Started server on http://localhost:' + port);
+}).catch(err => {
+    console.error(err);
 });

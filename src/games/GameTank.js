@@ -1,4 +1,4 @@
-let { WzwScreen, WzwBomb } = require("../platform/WzwScreen");
+let { WzwScreen, WzwBomb, AUDIO } = require("../platform/WzwScreen");
 
 // 一个坦克同时最多发出这么多个子弹
 const BALLMAXCOUNT = 2;
@@ -8,16 +8,16 @@ const LEVELS = [550, 540, 530, 520, 500, 490, 480, 470, 450, 430, 410, 400, 380,
 
 // 指定关卡需要射击多少个坦克才可以提升关卡。
 const SHOOT_LEVELS = {
-    '0':  15,
-    '1':  20,
-    '2':  25,
-    '3':  32,
-    '4':  40,
-    '5':  50,
-    '6':  60,
-    '7':  75,
-    '8':  90,
-    '9':  100,
+    '0': 15,
+    '1': 20,
+    '2': 25,
+    '3': 32,
+    '4': 40,
+    '5': 50,
+    '6': 60,
+    '7': 75,
+    '8': 90,
+    '9': 100,
     '10': 110,
     '11': 120,
     '12': 130,
@@ -44,25 +44,29 @@ const DIRECTION = {
     BOTTOM: 3,
     LEFT: 4,
 
-    UP_ARR:    function () {
-        return [[0,1,0],
-            [1,1,1],
-            [1,0,1]]},
+    UP_ARR: function () {
+        return [[0, 1, 0],
+        [1, 1, 1],
+        [1, 0, 1]]
+    },
 
-    RIGHT_ARR:  function () {
-        return [[1,1,0],
-            [0,1,1],
-            [1,1,0]]},
+    RIGHT_ARR: function () {
+        return [[1, 1, 0],
+        [0, 1, 1],
+        [1, 1, 0]]
+    },
 
     BOTTOM_ARR: function () {
-        return [[1,0,1],
-            [1,1,1],
-            [0,1,0]]},
+        return [[1, 0, 1],
+        [1, 1, 1],
+        [0, 1, 0]]
+    },
 
-    LEFT_ARR:   function () {
-        return [[0,1,1],
-            [1,1,0],
-            [0,1,1]]},
+    LEFT_ARR: function () {
+        return [[0, 1, 1],
+        [1, 1, 0],
+        [0, 1, 1]]
+    },
 };
 
 // 游戏状态
@@ -130,7 +134,7 @@ Ball.prototype.initBallOffset = function () {
 Ball.prototype.update = function () {
     if (!this.available) return;
 
-    if ((Date.now() - (this.lastTime||0)) >= this.time) {
+    if ((Date.now() - (this.lastTime || 0)) >= this.time) {
         if (this.direction === DIRECTION.UP) {
             this.offsetRow = this.offsetRow - 1;
         } else if (this.direction === DIRECTION.RIGHT) {
@@ -174,30 +178,30 @@ Ball.prototype.checkKilled = function () {
             WzwScreen.each(_this.tanker.tank.tankers, function (tanker, index) {
                 if (tanker.isAtomIn(_this.offsetRow, _this.offsetCol)) {
                     // 打中了。使用 throw 可以直接中断 each 循环。
-                    throw {message: "killed", index: index, tanker: tanker};
+                    throw { message: "killed", index: index, tanker: tanker };
                 }
             })
 
             // 玩家的子弹是否打中boss
             if (_this.tanker.tank.boss && _this.tanker.tank.boss.isAtomIn(_this.offsetRow, _this.offsetCol)) {
                 if (_this.tanker.tank.boss.isAtomInGun(_this.offsetRow, _this.offsetCol)) {
-                    throw {message: "killed", index: 0, tanker: _this.tanker.tank.boss};
+                    throw { message: "killed", index: 0, tanker: _this.tanker.tank.boss };
                 }
-                throw {message: "hited", index: 0};
+                throw { message: "hited", index: 0 };
             }
 
         } else if (_this.tanker.role === ROLE.FOE) {
             // 敌人的子弹是否打中玩家/
             if (_this.tanker.tank.hreo && _this.tanker.tank.hreo.isAtomIn(_this.offsetRow, _this.offsetCol)) {
-                throw {message: "killed", index: 0, tanker: _this.tanker.tank.hreo};
+                throw { message: "killed", index: 0, tanker: _this.tanker.tank.hreo };
             }
 
             // 敌人的子弹是否打中玩家的子弹 - 不需要判断玩家的子弹是否打中敌人的子弹，因为2个子弹相遇会同时消失。所以只有这里有对子弹的判断。
             if (_this.tanker.tank.hreo && _this.tanker.tank.hreo.isAtomInAtom(_this.offsetRow, _this.offsetCol)) {
-                throw {message: "hited", index: 0};
+                throw { message: "hited", index: 0 };
             }
         }
-    }catch (e) {
+    } catch (e) {
         if (e.message === "killed") {
 
             if (e.tanker.role === ROLE.FOE) {
@@ -249,15 +253,15 @@ Ball.prototype.checkKilled = function () {
  */
 function Tanker(offsetRow, offsetCol, role, direction, tank) {
     // 坦克大小就3×3的的。
-    this.width         = 3;
-    this.height        = 3;
-    this.offsetRow     = offsetRow;
-    this.offsetCol     = offsetCol;
-    this.role          = role;
-    this.direction     = direction;
-    this.balls         = [];            // 子弹列表
-    this.tank          = tank;          // 游戏实列
-    this.launch        = tank.launch;   // 启动器实列。
+    this.width = 3;
+    this.height = 3;
+    this.offsetRow = offsetRow;
+    this.offsetCol = offsetCol;
+    this.role = role;
+    this.direction = direction;
+    this.balls = [];            // 子弹列表
+    this.tank = tank;          // 游戏实列
+    this.launch = tank.launch;   // 启动器实列。
 
     // 如果坦克是英雄角色(就是玩家)，那么这个坦克中心的点阵会不停的闪烁，以方便识别这是英雄。
     // 此字段表示闪烁的间隔时间。（毫秒）
@@ -283,7 +287,7 @@ Tanker.prototype.init = function () {
 /**
  * 初始化坦克的点阵。这个点阵会根据坦克的方向进行初始化/
  */
-Tanker.prototype.initAtoms = function (){
+Tanker.prototype.initAtoms = function () {
     switch (this.direction) {
         case DIRECTION.UP:
             this.atoms = DIRECTION.UP_ARR();
@@ -297,7 +301,7 @@ Tanker.prototype.initAtoms = function (){
         case DIRECTION.LEFT:
             this.atoms = DIRECTION.LEFT_ARR();
             break;
-        default:throw new Error("不支持的方向");
+        default: throw new Error("不支持的方向");
     }
 };
 
@@ -309,7 +313,7 @@ Tanker.prototype.initAtoms = function (){
 Tanker.prototype.applyAtom = function (atoms) {
     for (let i = 0; i < this.height; i++) {
         for (let j = 0; j < this.width; j++) {
-            if (i===1 && j===1) {
+            if (i === 1 && j === 1) {
                 atoms[this.offsetRow + i][this.offsetCol + j] = this.atoms[i][j];
             } else if (this.atoms[i][j] === 1) {
                 atoms[this.offsetRow + i][this.offsetCol + j] = this.atoms[i][j];
@@ -332,7 +336,7 @@ Tanker.prototype.applyAtom = function (atoms) {
 Tanker.prototype.update = function () {
 
     if (this.role === ROLE.HERO) {
-        if ((Date.now() - (this.heropointLastTime||0)) >= this.heropointtime) {
+        if ((Date.now() - (this.heropointLastTime || 0)) >= this.heropointtime) {
             this.atoms[1][1] = (this.atoms[1][1] === 1 ? 0 : 1);
 
             this.heropointLastTime = Date.now();
@@ -349,7 +353,7 @@ Tanker.prototype.update = function () {
 /**
  * 更新敌人的状态，这里面实现了敌人的自动移动和自动发射子弹。
  */
-Tanker.prototype.updateEOF = function (){
+Tanker.prototype.updateEOF = function () {
     let moveOrTurn = WzwScreen.random(0, 100);
     if (moveOrTurn >= 30) { // 70%
         // 移动一格。
@@ -373,7 +377,7 @@ Tanker.prototype.turnTo = function (direction) {
 /**
  * 向指定方向移动指定个点阵, 如果当前方向和目标移动方向不一致，则此次调用只会进行转向操作。
  */
-Tanker.prototype.moveTo = function(direction, count) {
+Tanker.prototype.moveTo = function (direction, count) {
     switch (direction) {
         case DIRECTION.UP:
             this.moveToUp(count);
@@ -391,7 +395,7 @@ Tanker.prototype.moveTo = function(direction, count) {
     }
 };
 
-Tanker.prototype.moveToUp     = function (count, keepDirection) {
+Tanker.prototype.moveToUp = function (count, keepDirection) {
     if (this.direction !== DIRECTION.UP && !keepDirection) {
         this.direction = DIRECTION.UP;
         this.atoms = DIRECTION.UP_ARR();
@@ -405,10 +409,11 @@ Tanker.prototype.moveToUp     = function (count, keepDirection) {
         return;
     }
 
+    this.launch.screen.playAudio(this.role === ROLE.HERO ? AUDIO.Hero_move : AUDIO.Enemy_move, 1);
     this.offsetRow -= count;
 };
 
-Tanker.prototype.moveToRight  = function (count, keepDirection) {
+Tanker.prototype.moveToRight = function (count, keepDirection) {
     if (this.direction !== DIRECTION.RIGHT && !keepDirection) {
         this.direction = DIRECTION.RIGHT;
         this.atoms = DIRECTION.RIGHT_ARR();
@@ -422,6 +427,7 @@ Tanker.prototype.moveToRight  = function (count, keepDirection) {
         return;
     }
 
+    this.launch.screen.playAudio(this.role === ROLE.HERO ? AUDIO.Hero_move : AUDIO.Enemy_move, 1);
     this.offsetCol += count;
 };
 
@@ -440,10 +446,11 @@ Tanker.prototype.moveToBottom = function (count, keepDirection) {
         return;
     }
 
+    this.launch.screen.playAudio(this.role === ROLE.HERO ? AUDIO.Hero_move : AUDIO.Enemy_move, 1);
     this.offsetRow += count;
 };
 
-Tanker.prototype.moveToLeft   = function (count, keepDirection) {
+Tanker.prototype.moveToLeft = function (count, keepDirection) {
     if (this.direction !== DIRECTION.LEFT && !keepDirection) {
         this.direction = DIRECTION.LEFT;
         this.atoms = DIRECTION.LEFT_ARR();
@@ -458,6 +465,7 @@ Tanker.prototype.moveToLeft   = function (count, keepDirection) {
     }
 
 
+    this.launch.screen.playAudio(this.role === ROLE.HERO ? AUDIO.Hero_move : AUDIO.Enemy_move, 1);
     this.offsetCol -= count;
 };
 
@@ -467,10 +475,10 @@ Tanker.prototype.hasTankerOn = function (direction) {
 
         let colFlag = 0, rowFlag = 0;
         switch (direction) {
-            case DIRECTION.LEFT:   colFlag = -1; break;
-            case DIRECTION.UP:     rowFlag = -1; break;
-            case DIRECTION.RIGHT:  colFlag =  1; break;
-            case DIRECTION.BOTTOM: rowFlag =  1; break;
+            case DIRECTION.LEFT: colFlag = -1; break;
+            case DIRECTION.UP: rowFlag = -1; break;
+            case DIRECTION.RIGHT: colFlag = 1; break;
+            case DIRECTION.BOTTOM: rowFlag = 1; break;
         }
 
         let _this = this;
@@ -495,7 +503,7 @@ Tanker.prototype.hasTankerOn = function (direction) {
             });
         }
 
-    }catch (e) {
+    } catch (e) {
         return true;
     }
     return false;
@@ -546,9 +554,13 @@ Tanker.prototype.shoot = function () {
         return;
     }
 
+    if (_this.role === ROLE.HERO) {
+        _this.launch.screen.playAudio(AUDIO.Tetris_change, 1);
+    }
+
     let ball = new Ball(this, function (ball) {
         let i = _this.balls.indexOf(ball);
-        if (i <= -1) {return;}
+        if (i <= -1) { return; }
         _this.balls.splice(i, 1);
     });
     _this.balls.push(ball);
@@ -557,7 +569,7 @@ Tanker.prototype.shoot = function () {
 /**
  * 判断某个点阵是否在这个坦克的范围内。
  */
-Tanker.prototype.isAtomIn = function(row, col) {
+Tanker.prototype.isAtomIn = function (row, col) {
     if (this.offsetRow <= row && row <= (this.offsetRow + 2)) {
         if (this.offsetCol <= col && col <= (this.offsetCol + 2)) {
             return true;
@@ -571,7 +583,7 @@ Tanker.prototype.isAtomIn = function(row, col) {
  * @param row
  * @param col
  */
-Tanker.prototype.isAtomInAtom = function(row, col) {
+Tanker.prototype.isAtomInAtom = function (row, col) {
     for (let i = 0; i < this.balls.length; i++) {
         let b = this.balls[i];
         if (!b.available) {
@@ -594,13 +606,13 @@ Tanker.prototype.isAtomInAtom = function(row, col) {
 Tanker.prototype.getDiffDirection = function () {
     let dirs;
     if (this.direction === DIRECTION.UP) {
-        dirs = [DIRECTION.RIGHT, DIRECTION.BOTTOM,DIRECTION.LEFT];
+        dirs = [DIRECTION.RIGHT, DIRECTION.BOTTOM, DIRECTION.LEFT];
     } else if (this.direction === DIRECTION.RIGHT) {
-        dirs = [DIRECTION.LEFT, DIRECTION.BOTTOM,DIRECTION.LEFT];
+        dirs = [DIRECTION.LEFT, DIRECTION.BOTTOM, DIRECTION.LEFT];
     } else if (this.direction === DIRECTION.BOTTOM) {
-        dirs = [DIRECTION.RIGHT, DIRECTION.UP,DIRECTION.LEFT];
+        dirs = [DIRECTION.RIGHT, DIRECTION.UP, DIRECTION.LEFT];
     } else if (this.direction === DIRECTION.LEFT) {
-        dirs = [DIRECTION.RIGHT, DIRECTION.BOTTOM,DIRECTION.UP];
+        dirs = [DIRECTION.RIGHT, DIRECTION.BOTTOM, DIRECTION.UP];
     }
 
     return dirs[WzwScreen.random(0, dirs.length)];
@@ -609,29 +621,29 @@ Tanker.prototype.getDiffDirection = function () {
 
 // 关卡boss
 function TankerBoss(offsetCol, hp, moveStepTime, tank) {
-    this.boss      = true;
+    this.boss = true;
     this.direction = DIRECTION.BOTTOM;
     this.offsetRow = -8;
     this.offsetCol = offsetCol;
-    this.hp        = hp;            // boss 血量
-    this.tank      = tank;
-    this.launch    = tank.launch;
-    this.balls     = [];            // 子弹列表
-    this.role      = ROLE.FOE;
-    this.fram      = [
-        [1,1,0,0,0,1,1],
-        [0,1,0,0,0,1,0],
-        [1,0,1,1,1,0,1],
-        [0,1,1,0,1,1,0],
-        [1,0,1,1,1,0,1],
-        [0,1,0,1,0,1,0],
-        [1,1,0,1,0,1,1],
-        [0,0,0,1,0,0,0]
+    this.hp = hp;            // boss 血量
+    this.tank = tank;
+    this.launch = tank.launch;
+    this.balls = [];            // 子弹列表
+    this.role = ROLE.FOE;
+    this.fram = [
+        [1, 1, 0, 0, 0, 1, 1],
+        [0, 1, 0, 0, 0, 1, 0],
+        [1, 0, 1, 1, 1, 0, 1],
+        [0, 1, 1, 0, 1, 1, 0],
+        [1, 0, 1, 1, 1, 0, 1],
+        [0, 1, 0, 1, 0, 1, 0],
+        [1, 1, 0, 1, 0, 1, 1],
+        [0, 0, 0, 1, 0, 0, 0]
     ];
-    this.status    = TankerBoss.STATUS.SHOWING;
+    this.status = TankerBoss.STATUS.SHOWING;
     this.moveStepTime = moveStepTime;  // 移动时序长度。
-    this.way       = 'left';     // 先向左移动
-    this.wayCount  = 1;          // 每次移动1格。
+    this.way = 'left';     // 先向左移动
+    this.wayCount = 1;          // 每次移动1格。
 
     this.showingStepTime = 100; // 出场时序长度。
 
@@ -641,7 +653,7 @@ TankerBoss.prototype.updateAndApply = function (atoms) {
     // 正在出场过程。
     if (this.status === TankerBoss.STATUS.SHOWING) {
 
-        if (Date.now() - (this.lastStepTime||0) >= this.showingStepTime) {
+        if (Date.now() - (this.lastStepTime || 0) >= this.showingStepTime) {
             this.offsetRow += 1;
 
             if (this.offsetRow >= 0) {
@@ -679,7 +691,7 @@ TankerBoss.prototype.updateAndApply = function (atoms) {
             this.lastStepTime = Date.now();
         }
     } else if (this.status === TankerBoss.STATUS.RUNAWAYING) {
-        if (Date.now() - (this.lastStepTime||0) >= this.showingStepTime) {
+        if (Date.now() - (this.lastStepTime || 0) >= this.showingStepTime) {
             this.offsetRow -= 1;
 
             if (this.offsetRow <= -8) {
@@ -715,7 +727,7 @@ TankerBoss.prototype.shoot = function () {
     _this.shooted = true;
     let ball = new Ball(_this, function (ball) {
         let i = _this.balls.indexOf(ball);
-        if (i <= -1) {return;}
+        if (i <= -1) { return; }
         _this.balls.splice(i, 1);
     });
     _this.balls.push(ball);
@@ -767,9 +779,9 @@ TankerBoss.prototype.isAtomIn = function (row, col) {
 
 TankerBoss.STATUS = {
     SHOWING: 1, // boss正在出场过程。
-    SHOWED:  2, // boss出场完毕。
+    SHOWED: 2, // boss出场完毕。
     RUNAWAYING: 3, // boss逃跑中。
-    RUNAWAYED:  4, // boss逃跑完毕。
+    RUNAWAYED: 4, // boss逃跑完毕。
 }
 
 
@@ -1019,15 +1031,15 @@ Tank.prototype.onUpdateStatus = function () {
 
 // 【生命周期函数】游戏结束时调用。比如:玩着玩着用户按一下复位按钮，此时动画执行到满屏，会调用该函数，游戏应该清除自己的状态。
 Tank.prototype.onDestroy = function () {
-    this.hreo    = undefined;
-    this.score   = 0;
-    this.level   = 0;
+    this.hreo = undefined;
+    this.score = 0;
+    this.level = 0;
     this.tankers = [];
-    this.bomb    = undefined;
-    this.status  = GAME_STATUS.GAMEOVER;
-    this.boss    = undefined;
+    this.bomb = undefined;
+    this.status = GAME_STATUS.GAMEOVER;
+    this.boss = undefined;
     this.bossMod = false;
-    this.best    = 0;
+    this.best = 0;
 
     this.launch.screen.setBest(0);
     this.launch.screen.setScore(0);
@@ -1051,9 +1063,9 @@ Tank.prototype.onKeyup = function (key) {
 
 // 【事件函数】当某按键按下时调用
 Tank.prototype.onKeyDown = function (key) {
-    if (!this.hreo) {return;}
-    if (this.autoMoving) {return;} // 打boss前有个自动向boss对面移动的过程，此过程不允许被干预。
-    if (this.status === GAME_STATUS.PAUSED) {return;} // 暂停了
+    if (!this.hreo) { return; }
+    if (this.autoMoving) { return; } // 打boss前有个自动向boss对面移动的过程，此过程不允许被干预。
+    if (this.status === GAME_STATUS.PAUSED) { return; } // 暂停了
 
     if (key === "up") {
         if (this.bossMod) return;
@@ -1114,6 +1126,7 @@ Tank.prototype.goto = function (target, cb/*到达目的地时回调此方法*/)
  * 当敌人被杀时调用。
  */
 Tank.prototype.onEofKill = function () {
+    this.launch.screen.playAudio(AUDIO.Enemy_die, 1);
     this.score += 1;
     this.shotCount += 1;
     this.launch.screen.setScore(this.score);
@@ -1144,7 +1157,7 @@ Tank.prototype.levelUp = function () {
     // 然后去到界面底部。
     _this.goto([
         this.launch.screen.option.atomRowCount - 3,
-        parseInt(((this.launch.screen.option.atomColCount - 1) / 2)-1),
+        parseInt(((this.launch.screen.option.atomColCount - 1) / 2) - 1),
     ], function () {
 
         // 矫正玩家方向。
@@ -1162,8 +1175,8 @@ Tank.prototype.levelUp = function () {
 
             // boss跑了后，自动将玩家坦克移动到屏幕中间。
             _this.goto([
-                parseInt(((this.launch.screen.option.atomRowCount - 1) / 2)-1),
-                parseInt(((this.launch.screen.option.atomColCount - 1) / 2)-1),
+                parseInt(((this.launch.screen.option.atomRowCount - 1) / 2) - 1),
+                parseInt(((this.launch.screen.option.atomColCount - 1) / 2) - 1),
             ], function () {
                 _this.bossMod = false;
             });
@@ -1180,6 +1193,8 @@ Tank.prototype.onBossKill = function () {
     this.boss.hpDown();
 
     if (this.boss.getHp() <= 0) {
+        this.launch.screen.playAudio(AUDIO.Hero_die, 1);
+        this.launch.screen.playAudio(AUDIO.Boss_die_bg, 1);
         // boss 没血了。
         this.boss.runAway(); //
     }
@@ -1188,7 +1203,8 @@ Tank.prototype.onBossKill = function () {
 /**
  * 当玩家被杀时调用。
  */
-Tank.prototype.onHeroKill = function() {
+Tank.prototype.onHeroKill = function () {
+    this.launch.screen.playAudio(AUDIO.Hero_die, 1);
     this.status = GAME_STATUS.KILLED;
     let _this = this;
     _this.bomb = new WzwBomb({
@@ -1214,10 +1230,10 @@ function initForNewGame() {
     this.launch.screen.setBest(this.best);
 
     // 初始化有3条命。同时正好使用这个来渲染右侧的小点阵，来表示用户还有几条命。
-    this.lifes = [[0,0,0,0]];
+    this.lifes = [[0, 0, 0, 0]];
     this.lifeCount = 3;
     for (let i = 0; i < this.lifeCount; i++) {
-        this.lifes.push([1,1,1,1]);
+        this.lifes.push([1, 1, 1, 1]);
     }
 
     startForNewHreo.call(this);
@@ -1247,7 +1263,7 @@ function startForNewHreo() {
 /**
  * 使用一个玩家。此方法调用一次，就从玩家的所有命数中取一条命。当此方法返回null时，没有生命了。
  */
-function useaHero () {
+function useaHero() {
 
     // 已经用光了所有的命数。
     if (this.lifeCount <= 0) {
@@ -1258,7 +1274,7 @@ function useaHero () {
 
     // 更新命数指示点阵。
     for (let i = 0; i < 4 - this.lifeCount; i++) {
-        this.lifes[i] = [0,0,0,0];
+        this.lifes[i] = [0, 0, 0, 0];
     }
 
     let r = 9, c = 4;
@@ -1286,11 +1302,11 @@ function makeaFOE() {
     if (ps === 'top_left') {
         this.tankers.push(new Tanker(0, 0, ROLE.FOE, DIRECTION.BOTTOM, this));
     } else if (ps === 'top_right') {
-        this.tankers.push(new Tanker(0, this.launch.screen.option.atomColCount-3, ROLE.FOE, DIRECTION.BOTTOM, this));
+        this.tankers.push(new Tanker(0, this.launch.screen.option.atomColCount - 3, ROLE.FOE, DIRECTION.BOTTOM, this));
     } else if (ps === 'bottom_left') {
-        this.tankers.push(new Tanker(this.launch.screen.option.atomRowCount-3, 0, ROLE.FOE, DIRECTION.UP, this));
+        this.tankers.push(new Tanker(this.launch.screen.option.atomRowCount - 3, 0, ROLE.FOE, DIRECTION.UP, this));
     } else if (ps === 'bottom_right') {
-        this.tankers.push(new Tanker(this.launch.screen.option.atomRowCount-3, this.launch.screen.option.atomColCount-3, ROLE.FOE, DIRECTION.UP, this));
+        this.tankers.push(new Tanker(this.launch.screen.option.atomRowCount - 3, this.launch.screen.option.atomColCount - 3, ROLE.FOE, DIRECTION.UP, this));
     }
 }
 
@@ -1300,7 +1316,7 @@ function makeaFOE() {
  *
  * 传入现有的敌方坦克和玩家坦克，以确定它们是否占据了即将要产生的新坦克的位置。
  */
-function findEOFAvailablePosition (tankers, hero) {
+function findEOFAvailablePosition(tankers, hero) {
     let resul_t = [];
 
     // 判断上左
@@ -1355,7 +1371,7 @@ function findEOFAvailablePosition (tankers, hero) {
     return resul_t;
 }
 
-function judgeArrHasTanker (judgeArr, tankers, hero) {
+function judgeArrHasTanker(judgeArr, tankers, hero) {
     for (let j = 0; j < judgeArr.length; j++) {
         for (let i = 0; i < tankers.length; i++) {
 
@@ -1371,8 +1387,9 @@ function judgeArrHasTanker (judgeArr, tankers, hero) {
     return false;
 }
 
-function doGameOver () {
+function doGameOver() {
     let _this = this;
+    _this.launch.screen.playAudio(AUDIO.GAME_OVER, 1);
     _this.status = GAME_STATUS.PAUSED;
     _this.launch.screen.playAnim(WzwScreen.ANIM.B2T, function (animName, index) {
         if (index === 0) {

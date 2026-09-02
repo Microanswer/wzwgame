@@ -25,8 +25,7 @@ function getWebpackCfgOf(env) {
         },
         output: {
             filename: "app.js",
-            path: pathOf("dist"),
-            publicPath: "./"
+            path: pathOf("dist")
         },
         module: {
             rules: [

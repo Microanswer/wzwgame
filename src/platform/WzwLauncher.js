@@ -134,7 +134,8 @@ WzwLauncher.prototype.reboot = function () {
             _this.status = WzwLauncher.STATUS.BOOTED;
         }
     });
-    _this.screen.audio.play(AUDIO.BG, 0);
+    _this.screen.audio.stopAll();
+    _this.screen.playAudio(AUDIO.BG, 1);
 }
 
 WzwLauncher.prototype.turnOff = function() {
@@ -227,6 +228,7 @@ function onKeyUp(key) {
             this.currentGame.onKeyup && this.currentGame.onKeyup(key);
         } else {
             if ("rotate" === key) {
+                this.screen.playAudio(AUDIO.BTN_ROTATE, 1);
                 // 没开始游戏时，就使用此按钮进行多个游戏间的切换。
                 if (this.current >= this.games.length - 1) {
                     this.current = 0;
@@ -235,6 +237,7 @@ function onKeyUp(key) {
                 }
                 return;
             } else if ("start" === key) {
+                this.screen.playAudio(AUDIO.BTN_START, 1);
                 this.start();
                 return;
             }

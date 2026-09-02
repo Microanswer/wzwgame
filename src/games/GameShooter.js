@@ -1,4 +1,4 @@
-let {WzwScreen, WzwBomb} = require("../platform/WzwScreen");
+let {WzwScreen, WzwBomb, AUDIO} = require("../platform/WzwScreen");
 
 const GAME_STATUS = {
     STATUS_UNSET: 0,
@@ -160,6 +160,7 @@ Plane.prototype.shoot = function () {
         return ;
     }
 
+    _this.screen.playAudio(AUDIO.Tetris_change, 1);
     var b = new Bullet(this.offsetCol + 1, this.offsetRow - 1, this.screen, this.wall);
     b.setDisabledListener(function (bullet) {
 
@@ -282,6 +283,7 @@ Shooter.prototype.startNewGame = function () {
         this.status = GAME_STATUS.STATUS_GAMEOVER;
 
         let _this = this;
+        this.launch.screen.playAudio(AUDIO.GAMEOVER, 1);
         this.launch.screen.playAnim(WzwScreen.ANIM.B2T, function (animName, index) {
             if (index === 0) {
                 _this.onDestroy();

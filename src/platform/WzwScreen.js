@@ -1,32 +1,42 @@
-const {getResource} = require("./ResourceLoader");
+const { getResource } = require("./ResourceLoader");
 const SoundPlayer = require("./SoundPlayer");
 const AUDIOIDS = {
     BG: "bg",
+    BTN_ROTATE: "btn_rotate",
+    BTN_START: "btn_start",
+    Tetris_change: "tetris_change",
+    GAME_OVER: "game_over",
+    Enemy_die: "enemy_die",
+    Shoot: "shoot",
+    Hero_move: "hero_move",
+    Enemy_move: "enemy_move",
+    Hero_die: "hero_die",
+    Boss_die_bg: "boss_die_bg",
 };
 const DEFAULT_OPTION = {
-    width:         193,           // 游戏屏幕宽度
-    height:        255,           // 游戏屏幕高度
-    atomRowCount:  21,            // 点阵行数
-    atomColCount:  11,            // 点阵列数
-    atomBorder:    2,             // 点阵边框大小
-    atomInset:     2,             // 点阵内空白大小
-    atomSpace:     3,             // 点阵间距
-    splitPosition: 0.7 ,          // 左右分隔位置，取值范围:0~1
-    splitSize:     2,             // 分割线大小
-    fontSize:      13,            // 文字大小
-    fontHeight:    15,            // 文字行高
-    background:    "#9facaa",     // 背景色
-    color1:        "#000000",     // 浓颜色
-    color2:        "#949f9d",     // 浅颜色
+    width: 193,           // 游戏屏幕宽度
+    height: 255,           // 游戏屏幕高度
+    atomRowCount: 21,            // 点阵行数
+    atomColCount: 11,            // 点阵列数
+    atomBorder: 2,             // 点阵边框大小
+    atomInset: 2,             // 点阵内空白大小
+    atomSpace: 3,             // 点阵间距
+    splitPosition: 0.7,          // 左右分隔位置，取值范围:0~1
+    splitSize: 2,             // 分割线大小
+    fontSize: 13,            // 文字大小
+    fontHeight: 15,            // 文字行高
+    background: "#9facaa",     // 背景色
+    color1: "#000000",     // 浓颜色
+    color2: "#949f9d",     // 浅颜色
 };
 
 const CONSTANT = {
     STRINGS: {
         score: "Score",
-        best:  "Best",
+        best: "Best",
         level: "Level",
         pause: "PAUSE",
-        fps:   "FPS"
+        fps: "FPS"
     }
 };
 
@@ -81,7 +91,28 @@ function WzwScreen(dom, option) {
     this.testspan = this.option.testspan;
 
     this.audio = new SoundPlayer();
-    this.audio.loadSound(AUDIOIDS.BG, "./sound/boot_bg.ogg");
+    this.audio.loadSound(AUDIOIDS.BG, "./sound/开机音乐.ogg");
+    this.audio.loadSound(AUDIOIDS.BTN_ROTATE, "./sound/切换游戏、俄罗斯方块移动.ogg");
+    this.audio.loadSound(AUDIOIDS.BTN_START, "./sound/真棒.ogg");
+    this.audio.loadSound(AUDIOIDS.Tetris_change, "./sound/俄罗斯方块变形.ogg");
+    this.audio.loadSound(AUDIOIDS.GAME_OVER, "./sound/坦克大战-游戏结束.ogg");
+    this.audio.loadSound(AUDIOIDS.Enemy_die, "./sound/坦克大战-敌方被击毙、俄罗斯方块掉低上.ogg");
+    this.audio.loadSound(AUDIOIDS.Hero_move, "./sound/坦克大战-我方移动.ogg");
+    this.audio.loadSound(AUDIOIDS.Enemy_move, "./sound/坦克大战-敌方移动.ogg");
+    this.audio.loadSound(AUDIOIDS.Hero_die, "./sound/坦克大战-boss被击毙或我方被击毙.ogg");
+    this.audio.loadSound(AUDIOIDS.Boss_die_bg, "./sound/坦克大战-boss被击毙结束音ogg.ogg");
+
+    // 浏览器自动播放策略下，AudioContext 需要用户首次交互后才能出声。
+    // 这里在首次交互时激活一次即可（激活后自动解绑监听）。
+    let _resumeAudio = () => {
+        this.audio.resume();
+        this.dom.removeEventListener("click", _resumeAudio);
+        this.dom.removeEventListener("touchstart", _resumeAudio);
+        document.removeEventListener("keydown", _resumeAudio);
+    };
+    this.dom.addEventListener("click", _resumeAudio);
+    this.dom.addEventListener("touchstart", _resumeAudio);
+    document.addEventListener("keydown", _resumeAudio);
 
     init.call(this);             // 初始化数据。
     initScreen.call(this);       // 初始化绘画板。
@@ -95,7 +126,7 @@ function WzwScreen(dom, option) {
  * @return {{width: number, height: number}}
  */
 WzwScreen.prototype.getAtomSize = function () {
-    return {width: this.drawParam.atomWidth, height: this.drawParam.atomHeight};
+    return { width: this.drawParam.atomWidth, height: this.drawParam.atomHeight };
 }
 
 /**
@@ -192,9 +223,35 @@ WzwScreen.prototype.setPause = function (pause) {
  */
 WzwScreen.prototype.toggleSound = function () {
     this.soundon = !this.soundon;
+    this.audio.setSoundOn(this.soundon);
+    if (!this.soundon) {
+        this.audio.stopAll();
+    } else {
+        this.playAudio(AUDIOIDS.BTN_ROTATE, 1);
+    }
 }
 WzwScreen.prototype.setBest = function (best) {
     this.best = best;
+}
+
+/**
+ * 播放指定声音
+ * @param id
+ * @param volume {number}
+ * @param loop {boolean?}
+ */
+WzwScreen.prototype.playAudio = function (id, volume, loop) {
+    if (this.soundon) {
+        this.audio.play(id, volume, loop);
+    }
+}
+
+/**
+ * 停止指定的循环声音（如背景音乐）。
+ * @param id
+ */
+WzwScreen.prototype.stopAudio = function (id) {
+    this.audio.stop(id);
 }
 
 
@@ -211,23 +268,23 @@ function init() {
     // 初始化状态数据。
     _this.statusAtoms = undefined;
 
-    this.fps     = 60;
-    this.score   = 0;
-    this.paused  = false;
+    this.fps = 60;
+    this.score = 0;
+    this.paused = false;
     this.soundon = false; // 是否开启声音
-    this.level   = 0;
-    this.best    = 0;
+    this.level = 0;
+    this.best = 0;
 }
 
 // 初始化屏幕
-function initScreen () {
+function initScreen() {
     let canvasDom = document.createElement("canvas");
-    canvasDom.width            = canvasDom.style.width  = this.option.width;
-    canvasDom.height           = canvasDom.style.height = this.option.height;
-    canvasDom.style.margin     = "0";
-    canvasDom.style.padding    = "0";
+    canvasDom.width = canvasDom.style.width = this.option.width;
+    canvasDom.height = canvasDom.style.height = this.option.height;
+    canvasDom.style.margin = "0";
+    canvasDom.style.padding = "0";
     canvasDom.style.background = this.option.background;
-    canvasDom.style.display    = "block";
+    canvasDom.style.display = "block";
     // this.dom.appendChild(canvasDom);
     this.canvasDom = canvasDom;
 
@@ -238,7 +295,7 @@ function initScreen () {
     // this.innerCanvasDom = innerCanvasDom;
     this.dom.appendChild(canvasDom);
 
-    this.canvas     = this.canvasDom.getContext("2d");
+    this.canvas = this.canvasDom.getContext("2d");
     // this.viewCanvas = this.canvasDom.getContext("2d");
 }
 
@@ -248,11 +305,11 @@ function initRender() {
     let drawParam = {};
 
     drawParam.splitPosition = Math.round(this.option.width * this.option.splitPosition);
-    drawParam.atomSpace     = this.option.atomSpace || 1;
-    drawParam.atomWidth     = (drawParam.splitPosition - (drawParam.atomSpace * (this.option.atomColCount + 1))) / this.option.atomColCount;
-    drawParam.atomHeight    = (this.option.height - (drawParam.atomSpace * (this.option.atomRowCount + 1))) / this.option.atomRowCount;
-    drawParam.fontItalic    = "italic normal " + this.option.fontSize + "px arial";
-    drawParam.fontBold      = "normal bold " + this.option.fontSize + "px arial";
+    drawParam.atomSpace = this.option.atomSpace || 1;
+    drawParam.atomWidth = (drawParam.splitPosition - (drawParam.atomSpace * (this.option.atomColCount + 1))) / this.option.atomColCount;
+    drawParam.atomHeight = (this.option.height - (drawParam.atomSpace * (this.option.atomRowCount + 1))) / this.option.atomRowCount;
+    drawParam.fontItalic = "italic normal " + this.option.fontSize + "px arial";
+    drawParam.fontBold = "normal bold " + this.option.fontSize + "px arial";
 
 
     this.drawParam = drawParam;
@@ -264,7 +321,7 @@ function logicUpdate() {
 }
 
 // 绘制方法。
-function render () {
+function render() {
     let _this = this;
     let _fps = 0;
     let m = "";
@@ -273,7 +330,7 @@ function render () {
         _fps = 0;
     }, 1000);
 
-    (function loop () {
+    (function loop() {
         let t = Date.now();
         _fps += 1;
         logicUpdate.call(_this);
@@ -295,21 +352,21 @@ function render () {
         let t4 = Date.now();
 
         // 如果设置了testspan，则将一些绘制信息显示在这里面。
-        if (_this.testspan) {_this.testspan.innerText = ("逻辑耗时：" + (t2 - t) + "ms, 绘制耗时：" + (t3 - t2) + "ms, 帧请求(" +m+ ")耗时：" + (t4 - t3) + "ms, 帧间隔:"+(t -_this.lastttime) + "ms");}
+        if (_this.testspan) { _this.testspan.innerText = ("逻辑耗时：" + (t2 - t) + "ms, 绘制耗时：" + (t3 - t2) + "ms, 帧请求(" + m + ")耗时：" + (t4 - t3) + "ms, 帧间隔:" + (t - _this.lastttime) + "ms"); }
         _this.lastttime = Date.now();
     })();
 }
 
 // 绘制实现方法。
 function onRender(ctx) {
-    ctx.clearRect(0, 0,  this.option.width, this.option.height);
+    ctx.clearRect(0, 0, this.option.width, this.option.height);
     ctx.save();
     ctx.beginPath();
 
     // 绘制背景
     let ofs = ctx.fillStyle;
     ctx.fillStyle = this.option.background;
-    ctx.fillRect(0,0, this.option.width, this.option.height);
+    ctx.fillRect(0, 0, this.option.width, this.option.height);
     ctx.fillStyle = ofs;
 
     // 绘制游戏区 - 左边
@@ -319,12 +376,12 @@ function onRender(ctx) {
     let oss = ctx.strokeStyle;
     let osw = ctx.lineWidth;
     ctx.strokeStyle = this.option.color1;
-    ctx.lineWidth   = this.option.splitSize;
-    ctx.moveTo(this.drawParam.splitPosition + (this.option.splitSize/2), 0);
-    ctx.lineTo(this.drawParam.splitPosition + (this.option.splitSize/2), this.option.height);
+    ctx.lineWidth = this.option.splitSize;
+    ctx.moveTo(this.drawParam.splitPosition + (this.option.splitSize / 2), 0);
+    ctx.lineTo(this.drawParam.splitPosition + (this.option.splitSize / 2), this.option.height);
     ctx.stroke();
     ctx.strokeStyle = oss;
-    ctx.lineWidth   = osw;
+    ctx.lineWidth = osw;
 
     // 绘制游戏状态区 - 右边。
     renderBoard.call(this, ctx);
@@ -334,7 +391,7 @@ function onRender(ctx) {
 }
 
 // 绘制点阵区域
-function renderAtoms (ctx) {
+function renderAtoms(ctx) {
     let _this = this;
     let offsetY = 0;
     let offsetX = 0;
@@ -371,9 +428,9 @@ function renderAtoms (ctx) {
         offsetY += _this.drawParam.atomHeight;
     });
 
-    ctx.fillStyle   = ofs;
+    ctx.fillStyle = ofs;
     ctx.strokeStyle = oss;
-    ctx.lineWidth   = olw;
+    ctx.lineWidth = olw;
 }
 
 // 绘制某一个点阵，需要 像素级别的两个offset值。
@@ -385,23 +442,23 @@ function renderAtom(ctx, val, offsetRow, offsetCol) {
     ctx.fillRect(
         offsetCol + this.option.atomInset,
         offsetRow + this.option.atomInset,
-        this.drawParam.atomWidth  - (this.option.atomInset * 2),
+        this.drawParam.atomWidth - (this.option.atomInset * 2),
         this.drawParam.atomHeight - (this.option.atomInset * 2)
     )
 }
 
 // 绘制游戏状态区域
-function renderBoard (ctx) {
-    let _this       = this;
-    let ofs         = ctx.fillStyle;
-    let olw         = ctx.lineWidth;
-    let oss         = ctx.strokeStyle;
-    let of          = ctx.font;
+function renderBoard(ctx) {
+    let _this = this;
+    let ofs = ctx.fillStyle;
+    let olw = ctx.lineWidth;
+    let oss = ctx.strokeStyle;
+    let of = ctx.font;
     let fontOffsetY = _this.option.fontHeight;
     let fontOffsetX = _this.drawParam.splitPosition + 5;
 
     ctx.strokeStyle = _this.option.color1;
-    ctx.fillStyle   = _this.option.color1;
+    ctx.fillStyle = _this.option.color1;
 
     ctx.font = _this.drawParam.fontItalic;
     ctx.fillText(CONSTANT.STRINGS.score, fontOffsetX, fontOffsetY);
@@ -421,7 +478,7 @@ function renderBoard (ctx) {
         offsetCol = fontOffsetX;
         WzwScreen.each(4, function (colVal, col) {
             offsetCol += _this.drawParam.atomSpace;
-            renderAtom.call(_this, ctx, _this.statusAtoms?_this.statusAtoms[row][col]:0, offsetRow, offsetCol);
+            renderAtom.call(_this, ctx, _this.statusAtoms ? _this.statusAtoms[row][col] : 0, offsetRow, offsetCol);
             offsetCol += _this.drawParam.atomWidth;
         });
         offsetRow += _this.drawParam.atomHeight;
@@ -463,10 +520,10 @@ function renderBoard (ctx) {
     ctx.font = _this.drawParam.fontBold;
     ctx.fillText(_this.fps, fontOffsetX, _this.option.height - 2);
 
-    ctx.font        = of;
+    ctx.font = of;
     ctx.strokeStyle = oss;
-    ctx.fillStyle   = ofs;
-    ctx.lineWidth   = olw;
+    ctx.fillStyle = ofs;
+    ctx.lineWidth = olw;
 }
 
 // function applyRender(ctx) {
@@ -481,12 +538,12 @@ function applyAnim(animResult, animIndex, cb) {
     // 还有没有执行的动画组，则继续保持执行
     if (animIndex < animResult.animArr.length) {
         let animGroup = animResult.animArr[animIndex];
-        let animTime  = animResult.animTime[animIndex];
+        let animTime = animResult.animTime[animIndex];
 
         function applyFramOf(index) {
             // 拿到一帧。
             let fram = animGroup[index];
-            if (!fram) {return;}
+            if (!fram) { return; }
 
             // 在执行这个动画时发现动画本体被替换成了别的，那一定时这个动画还没完成，就在执行另一个动画了。
             // 这里直接将这个动画终止。
@@ -536,11 +593,11 @@ function getAtomPositionArr() {
  * 通过传入点阵边框粗细，内边距大小，点阵间隔大小，分割线占比，将给出一个最合适的屏幕区域像素大小值。
  * @constructor
  */
-WzwScreen.ScreenSizeCalculator = function (atomSpace, atomBorder, atomInset, atomInner, atomColCount,atomRowCount,splitPosition) {
-    let atomSize = ((atomBorder*2) + (atomInset*2) + atomInner);
+WzwScreen.ScreenSizeCalculator = function (atomSpace, atomBorder, atomInset, atomInner, atomColCount, atomRowCount, splitPosition) {
+    let atomSize = ((atomBorder * 2) + (atomInset * 2) + atomInner);
     let height = ((atomSize + atomSpace) * atomRowCount) + atomSpace;
     let width = (((atomSize + atomSpace) * atomColCount) + atomSpace) / splitPosition;
-    return {width: Math.round(width), height: height};
+    return { width: Math.round(width), height: height };
 };
 
 /**
@@ -548,7 +605,7 @@ WzwScreen.ScreenSizeCalculator = function (atomSpace, atomBorder, atomInset, ato
  */
 WzwScreen.assign = function () {
     let arg1 = arguments[0];
-    if (!arg1) {return;}
+    if (!arg1) { return; }
     for (let i = 1; i < arguments.length; i++) {
         let arg = arguments[i];
         if (arg) {
@@ -571,7 +628,7 @@ WzwScreen.each = function (arr, cb/*(val, index, arr) => {} */) {
         }
     } else if (Number.isInteger(arr)) {
         for (let i = 1; i <= arr; i++) {
-            cb && cb(i, i-1, arr);
+            cb && cb(i, i - 1, arr);
         }
     }
 };
@@ -617,7 +674,7 @@ WzwScreen.scroll = function (from, to, back, dur) {
 
     let startTime = Date.now(); // 开始时间
     // 开始执行
-    (function dd () {
+    (function dd() {
         setTimeout(function () {
             let now = Date.now(); // 当前帧开始时间
             let timestamp = now - startTime; // 逝去的时间(已进行动画的时间)
@@ -650,7 +707,7 @@ WzwScreen.scroll = function (from, to, back, dur) {
  * @param colIndex {number} 目标二维数组的列好
  * @param valueAdapter {?function(tarRowIndex, tarColIndex, srcRowIndex, srcColIndex)} 自定义融合规则， 不传递则是 直接将src里覆盖对应tar里的内容。
  */
-WzwScreen.mergeArr = function(src, tar, rowIndex, colIndex, valueAdapter) {
+WzwScreen.mergeArr = function (src, tar, rowIndex, colIndex, valueAdapter) {
     rowIndex = rowIndex || 0;
     colIndex = colIndex || 0;
 
@@ -681,7 +738,7 @@ WzwScreen.mergeArr = function(src, tar, rowIndex, colIndex, valueAdapter) {
  * @param colIndex
  * @param valueAdapter
  */
-WzwScreen.mergeArr2 = function(src, tar, rowIndex, colIndex, valueAdapter) {
+WzwScreen.mergeArr2 = function (src, tar, rowIndex, colIndex, valueAdapter) {
     rowIndex = rowIndex || 0;
     colIndex = colIndex || 0;
     let newArr = [];
@@ -714,7 +771,7 @@ WzwScreen.mergeArr2 = function(src, tar, rowIndex, colIndex, valueAdapter) {
  * @param start
  * @param end
  */
-WzwScreen.random = function(start, end) {
+WzwScreen.random = function (start, end) {
     return Math.floor((Math.random() * (end - start)) + start);
 };
 
@@ -735,9 +792,9 @@ WzwScreen.arrCopy = function arrCopy(src) {
 };
 
 let storage = {
-    getItem: function (key) {console.warn("getItem不支持localstorage、sessionstorage")},
-    setItem: function (key,value) {console.warn("setItem不支持localstorage、sessionstorage")},
-    removeItem: function (key) {console.warn("removeItem不支持localstorage、sessionstorage")},
+    getItem: function (key) { console.warn("getItem不支持localstorage、sessionstorage") },
+    setItem: function (key, value) { console.warn("setItem不支持localstorage、sessionstorage") },
+    removeItem: function (key) { console.warn("removeItem不支持localstorage、sessionstorage") },
 };
 
 WzwScreen.storeGet = function (key) {
@@ -747,7 +804,7 @@ WzwScreen.storeGet = function (key) {
     }
     return v;
 };
-WzwScreen.storeSet = function(key, value) {
+WzwScreen.storeSet = function (key, value) {
     return (localStorage || sessionStorage || storage).setItem(key, JSON.stringify(value));
 };
 WzwScreen.storeRemove = function (key) {
@@ -807,9 +864,9 @@ WzwScreen.ANIM = {
         let result = [];
 
         // 下面实现上面的算法，通过得到这样的一维数组，更方便的构建旋转动画帧。
-        let getMod     = "l"; // 取数模式，l：左边，r：右边，t：上边，b：下边。首先从左边开始取数。
+        let getMod = "l"; // 取数模式，l：左边，r：右边，t：上边，b：下边。首先从左边开始取数。
         let totalCount = _this.option.atomRowCount * _this.option.atomColCount;
-        let arr        = getAtomPositionArr.call(_this);
+        let arr = getAtomPositionArr.call(_this);
         while (result.length < totalCount) {
             let i;
             /**/ if (getMod === "l") {
@@ -843,7 +900,7 @@ WzwScreen.ANIM = {
 
                 // 顶部的得从右往左
                 let shift = arr.shift();
-                for (i = shift.length - 1; i >= 0 ; i--) {
+                for (i = shift.length - 1; i >= 0; i--) {
                     result.push(shift[i]);
                 }
 
@@ -897,8 +954,8 @@ WzwScreen.ANIM = {
 
         return {
             animName: "B2T",
-            animArr:  [animGroup, animGroup.concat([]).reverse()],
-            animTime: [700,      700]
+            animArr: [animGroup, animGroup.concat([]).reverse()],
+            animTime: [700, 700]
         }
     },
 
@@ -920,8 +977,8 @@ WzwScreen.ANIM = {
 
         return {
             animName: "T2B",
-            animArr:  [animGroup, animGroup.concat([]).reverse()],
-            animTime: [700,      700]
+            animArr: [animGroup, animGroup.concat([]).reverse()],
+            animTime: [700, 700]
         }
     },
 
@@ -933,7 +990,7 @@ WzwScreen.ANIM = {
 
         let rowIndex = 0;
         let i = 0, j = 0;
-        while(true) {
+        while (true) {
             let topRow = rowIndex;
             let bottomRow = _this.option.atomRowCount - (rowIndex + 1);
 
@@ -960,8 +1017,8 @@ WzwScreen.ANIM = {
 
         return {
             animName: "COP",
-            animArr:  [animGroup, animGroup.concat([]).reverse()],
-            animTime: [600,      600]
+            animArr: [animGroup, animGroup.concat([]).reverse()],
+            animTime: [600, 600]
         }
     }
 };
@@ -972,186 +1029,186 @@ WzwScreen.ANIM = {
  */
 WzwScreen.LETTER = {
     A: [
-        [0,1,1,1,0],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,1,1,1,1],
-        [1,0,0,0,1],
+        [0, 1, 1, 1, 0],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1],
     ],
     B: [
-        [1,1,1,1,0],
-        [0,1,0,0,1],
-        [0,1,1,1,0],
-        [0,1,0,0,1],
-        [1,1,1,1,0],
+        [1, 1, 1, 1, 0],
+        [0, 1, 0, 0, 1],
+        [0, 1, 1, 1, 0],
+        [0, 1, 0, 0, 1],
+        [1, 1, 1, 1, 0],
     ],
     C: [
-        [0,1,1,1,0],
-        [1,0,0,0,1],
-        [1,0,0,0,0],
-        [1,0,0,0,1],
-        [0,1,1,1,0],
+        [0, 1, 1, 1, 0],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 1],
+        [0, 1, 1, 1, 0],
     ],
     D: [
-        [1,1,1,1,0],
-        [0,1,0,0,1],
-        [0,1,0,0,1],
-        [0,1,0,0,1],
-        [1,1,1,1,0],
+        [1, 1, 1, 1, 0],
+        [0, 1, 0, 0, 1],
+        [0, 1, 0, 0, 1],
+        [0, 1, 0, 0, 1],
+        [1, 1, 1, 1, 0],
     ],
     E: [
-        [1,1,1,1,1],
-        [1,0,0,0,0],
-        [1,1,1,1,0],
-        [1,0,0,0,0],
-        [1,1,1,1,1],
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 0],
+        [1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 1],
     ],
     F: [
-        [1,1,1,1,1],
-        [1,0,0,0,0],
-        [1,1,1,1,0],
-        [1,0,0,0,0],
-        [1,0,0,0,0],
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 0],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
     ],
     G: [
-        [0,1,1,1,0],
-        [1,0,0,0,0],
-        [1,0,1,1,1],
-        [1,0,0,0,1],
-        [0,1,1,1,0],
+        [0, 1, 1, 1, 0],
+        [1, 0, 0, 0, 0],
+        [1, 0, 1, 1, 1],
+        [1, 0, 0, 0, 1],
+        [0, 1, 1, 1, 0],
     ],
     H: [
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,1,1,1,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
     ],
     I: [
-        [0,1,1,1,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [0,1,1,1,0],
+        [0, 1, 1, 1, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 1, 1, 1, 0],
     ],
     J: [
-        [0,1,1,1,0],
-        [0,0,0,1,0],
-        [0,0,0,1,0],
-        [1,0,0,1,0],
-        [0,1,1,0,0],
+        [0, 1, 1, 1, 0],
+        [0, 0, 0, 1, 0],
+        [0, 0, 0, 1, 0],
+        [1, 0, 0, 1, 0],
+        [0, 1, 1, 0, 0],
     ],
     K: [
-        [0,1,0,0,1],
-        [0,1,0,1,0],
-        [0,1,1,0,0],
-        [0,1,0,1,0],
-        [0,1,0,0,1],
+        [0, 1, 0, 0, 1],
+        [0, 1, 0, 1, 0],
+        [0, 1, 1, 0, 0],
+        [0, 1, 0, 1, 0],
+        [0, 1, 0, 0, 1],
     ],
     L: [
-        [1,0,0,0,0],
-        [1,0,0,0,0],
-        [1,0,0,0,0],
-        [1,0,0,0,0],
-        [1,1,1,1,0],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [1, 1, 1, 1, 0],
     ],
     M: [
-        [1,1,1,1,0],
-        [1,0,1,0,1],
-        [1,0,1,0,1],
-        [1,0,1,0,1],
-        [1,0,1,0,1],
+        [1, 1, 1, 1, 0],
+        [1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1],
     ],
     N: [
-        [1,0,0,0,1],
-        [1,1,0,0,1],
-        [1,0,1,0,1],
-        [1,0,0,1,1],
-        [1,0,0,0,1],
+        [1, 0, 0, 0, 1],
+        [1, 1, 0, 0, 1],
+        [1, 0, 1, 0, 1],
+        [1, 0, 0, 1, 1],
+        [1, 0, 0, 0, 1],
     ],
     O: [
-        [0,1,1,1,0],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [0,1,1,1,0],
+        [0, 1, 1, 1, 0],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [0, 1, 1, 1, 0],
     ],
     P: [
-        [1,1,1,1,0],
-        [1,0,0,0,1],
-        [1,1,1,1,0],
-        [1,0,0,0,0],
-        [1,0,0,0,0],
+        [1, 1, 1, 1, 0],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 0],
+        [1, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
     ],
     Q: [
-        [0,1,1,0,0],
-        [1,0,0,1,0],
-        [1,0,0,1,0],
-        [1,0,0,1,0],
-        [0,1,1,1,1],
+        [0, 1, 1, 0, 0],
+        [1, 0, 0, 1, 0],
+        [1, 0, 0, 1, 0],
+        [1, 0, 0, 1, 0],
+        [0, 1, 1, 1, 1],
     ],
     R: [
-        [1,1,1,1,0],
-        [1,0,0,0,1],
-        [1,1,1,1,0],
-        [1,0,1,0,0],
-        [1,0,0,1,1],
+        [1, 1, 1, 1, 0],
+        [1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 0],
+        [1, 0, 1, 0, 0],
+        [1, 0, 0, 1, 1],
     ],
     S: [
-        [0,1,1,1,1],
-        [1,0,0,0,0],
-        [0,1,1,1,0],
-        [0,0,0,0,1],
-        [1,1,1,1,0],
+        [0, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0],
+        [0, 1, 1, 1, 0],
+        [0, 0, 0, 0, 1],
+        [1, 1, 1, 1, 0],
     ],
     T: [
-        [1,1,1,1,1],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
+        [1, 1, 1, 1, 1],
+        [0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0],
     ],
     U: [
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [0,1,1,1,0],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [0, 1, 1, 1, 0],
     ],
     V: [
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [1,0,0,0,1],
-        [0,1,0,1,0],
-        [0,0,1,0,0],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1],
+        [0, 1, 0, 1, 0],
+        [0, 0, 1, 0, 0],
     ],
     W: [
-        [1,0,1,0,1],
-        [1,0,1,0,1],
-        [1,0,1,0,1],
-        [1,0,1,0,1],
-        [1,1,1,1,0],
+        [1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1],
+        [1, 1, 1, 1, 0],
     ],
     X: [
-        [1,0,0,0,1],
-        [0,1,0,1,0],
-        [0,0,1,0,0],
-        [0,1,0,1,0],
-        [1,0,0,0,1],
+        [1, 0, 0, 0, 1],
+        [0, 1, 0, 1, 0],
+        [0, 0, 1, 0, 0],
+        [0, 1, 0, 1, 0],
+        [1, 0, 0, 0, 1],
     ],
     Y: [
-        [1,0,0,0,1],
-        [0,1,0,1,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
-        [0,0,1,0,0],
+        [1, 0, 0, 0, 1],
+        [0, 1, 0, 1, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0],
+        [0, 0, 1, 0, 0],
     ],
     Z: [
-        [1,1,1,1,1],
-        [0,0,0,1,0],
-        [0,0,1,0,0],
-        [0,1,0,0,0],
-        [1,1,1,1,1],
+        [1, 1, 1, 1, 1],
+        [0, 0, 0, 1, 0],
+        [0, 0, 1, 0, 0],
+        [0, 1, 0, 0, 0],
+        [1, 1, 1, 1, 1],
     ],
 };
 
@@ -1165,21 +1222,21 @@ function WzwBomb(param) {
     param = param || {};
 
     this.height = 4;
-    this.width  = 4;
-    this.time   = 50;
+    this.width = 4;
+    this.time = 50;
     this.offsetRow = param.offsetRow;
     this.offsetCol = param.offsetCol;
-    this.frams  =
+    this.frams =
         [
-            [[1,0,0,1],
-             [0,1,1,0],
-             [0,1,1,0],
-             [1,0,0,1]],
+            [[1, 0, 0, 1],
+            [0, 1, 1, 0],
+            [0, 1, 1, 0],
+            [1, 0, 0, 1]],
 
-            [[0,1,1,0],
-             [1,0,0,1],
-             [1,0,0,1],
-             [0,1,1,0]]
+            [[0, 1, 1, 0],
+            [1, 0, 0, 1],
+            [1, 0, 0, 1],
+            [0, 1, 1, 0]]
         ];
     this.currentFram = 0;
     this.keepTime = param.keepTime || 1000; // 爆炸持续时间 （毫秒）
@@ -1213,5 +1270,5 @@ WzwBomb.prototype.render = function (atoms) {
 
 exports.AUDIO = AUDIOIDS;
 exports.DEFAULT_OPTION = DEFAULT_OPTION;
-exports.WzwBomb   = WzwBomb;
+exports.WzwBomb = WzwBomb;
 exports.WzwScreen = WzwScreen;
